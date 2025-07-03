@@ -1,0 +1,24 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  username: <%= ENV.fetch("PGUSER", "Josiah") %>
+  password: <%= ENV.fetch("PGPASSWORD", "") %>
+  host: <%= ENV.fetch("PGHOST", "localhost") %>
+  port: <%= ENV.fetch("PGPORT", 5432) %>
+
+development:
+  <<: *default
+  database: personal_coach_development
+
+test:
+  <<: *default
+  database: personal_coach_test
+
+production:
+  <<: *default
+  database: personal_coach_production
+  username: <%= ENV["PGUSER"] %>
+  password: <%= ENV["PGPASSWORD"] %>
+  host: <%= ENV["PGHOST"] %>
+  port: <%= ENV["PGPORT"] %>
