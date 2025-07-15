@@ -1,4 +1,8 @@
+# frozen_string_literal: true
+
 class Task < ApplicationRecord
+  belongs_to :profile
+
   validates :title, presence: true
 
   enum action_category: {
