@@ -24,6 +24,8 @@ module Api
         else
           render json: @task.errors, status: :unprocessable_entity
         end
+      rescue ArgumentError => e
+        render json: { errors: ['Invalid action_category value'] }, status: :unprocessable_entity
       end
 
       def update
@@ -32,6 +34,8 @@ module Api
         else
           render json: @task.errors, status: :unprocessable_entity
         end
+      rescue ArgumentError => e
+        render json: { errors: ['Invalid action_category value'] }, status: :unprocessable_entity
       end
 
       def destroy
