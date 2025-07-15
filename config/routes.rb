@@ -16,6 +16,7 @@ Rails.application.routes.draw do
           patch :complete_onboarding
         end
       end
+      resources :smart_goals
     end
   end
 end
