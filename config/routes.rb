@@ -11,6 +11,11 @@ Rails.application.routes.draw do
     namespace :v1 do
       resources :tasks
       resources :users, only: %i[show create]
+      resources :profiles, only: %i[show update] do
+        member do
+          patch :complete_onboarding
+        end
+      end
     end
   end
 end
