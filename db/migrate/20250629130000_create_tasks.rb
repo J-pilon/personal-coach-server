@@ -5,8 +5,7 @@ class CreateTasks < ActiveRecord::Migration[6.1]
       t.text :description
       t.boolean :completed, default: false
       t.integer :action_category, null: false
-
-      # come back to this file. Think about what the name should be for eisenhower labels
+      t.references :profile, null: false, foreign_key: true
 
       t.timestamps
     end
