@@ -5,6 +5,7 @@ class Profile < ApplicationRecord
 
   has_many :smart_goals, dependent: :destroy
   has_many :tasks, dependent: :destroy
+  has_many :ai_requests, dependent: :destroy
 
   validates :onboarding_status, inclusion: { in: %w[incomplete complete] }
 
