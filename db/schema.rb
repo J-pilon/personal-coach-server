@@ -10,9 +10,23 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_06_29_140000) do
+ActiveRecord::Schema[7.1].define(version: 2025_07_22_020811) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "ai_requests", force: :cascade do |t|
+    t.text "prompt", null: false
+    t.string "job_type", null: false
+    t.string "hash_value", null: false
+    t.string "status", null: false
+    t.text "error_message"
+    t.bigint "profile_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["hash_value"], name: "index_ai_requests_on_hash_value"
+    t.index ["job_type"], name: "index_ai_requests_on_job_type"
+    t.index ["profile_id"], name: "index_ai_requests_on_profile_id"
+  end
 
   create_table "profiles", force: :cascade do |t|
     t.string "first_name"
@@ -65,6 +79,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_06_29_140000) do
     t.index ["email"], name: "index_users_on_email", unique: true
   end
 
+  add_foreign_key "ai_requests", "profiles"
   add_foreign_key "profiles", "users"
   add_foreign_key "smart_goals", "profiles"
   add_foreign_key "tasks", "profiles"
