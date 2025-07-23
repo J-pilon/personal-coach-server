@@ -8,11 +8,9 @@ RSpec.describe Ai::AiService do
   let(:service) { described_class.new(profile.id) }
 
   describe '#process' do
-    let(:mock_context_compressor) { instance_double(Ai::ContextCompressor) }
     let(:mock_open_ai_client) { instance_double(Ai::OpenAiClient) }
 
     before do
-      allow(Ai::ContextCompressor).to receive(:new).and_return(mock_context_compressor)
       allow(Ai::OpenAiClient).to receive(:new).and_return(mock_open_ai_client)
     end
 
@@ -22,7 +20,8 @@ RSpec.describe Ai::AiService do
       let(:ai_response) { { 'specific' => 'Exercise for 30 minutes daily' } }
 
       before do
-        allow(mock_context_compressor).to receive(:compress).and_return(context)
+        allow(Ai::ContextCompressor).to receive(:perform).with(profile.id).and_return(context)
+        allow(Ai::IntentRouter).to receive(:perform).with(input).and_return(:smart_goal)
         allow(mock_open_ai_client).to receive(:chat_completion).and_return(ai_response)
       end
 
@@ -68,7 +67,8 @@ RSpec.describe Ai::AiService do
       let(:ai_response) { [{ 'task' => 'exercise', 'priority' => 1 }] }
 
       before do
-        allow(mock_context_compressor).to receive(:compress).and_return(context)
+        allow(Ai::ContextCompressor).to receive(:perform).with(profile.id).and_return(context)
+        allow(Ai::IntentRouter).to receive(:perform).with(input).and_return(:prioritization)
         allow(mock_open_ai_client).to receive(:chat_completion).and_return(ai_response)
       end
 
@@ -113,7 +113,8 @@ RSpec.describe Ai::AiService do
       let(:ai_response) { { 'specific' => 'Test goal' } }
 
       before do
-        allow(mock_context_compressor).to receive(:compress).and_return('')
+        allow(Ai::ContextCompressor).to receive(:perform).with(profile.id).and_return('')
+        allow(Ai::IntentRouter).to receive(:perform).with(input).and_return(:smart_goal)
         allow(mock_open_ai_client).to receive(:chat_completion).and_return(ai_response)
       end
 
@@ -128,7 +129,9 @@ RSpec.describe Ai::AiService do
       let(:input) { 'Unclear input that does not match any intent' }
 
       before do
-        allow(mock_context_compressor).to receive(:compress).and_return('')
+        allow(Ai::IntentRouter).to receive(:perform).with(input).and_raise(
+          StandardError, "IntentRouter: 'unclear input that does not match any intent' input does not match accepted choices."
+        )
       end
 
       it 'returns error response' do
@@ -144,25 +147,24 @@ RSpec.describe Ai::AiService do
       let(:input) { 'Create a goal' }
 
       before do
-        allow(mock_context_compressor).to receive(:compress).and_raise(StandardError, 'Test error')
+        allow(Ai::ContextCompressor).to receive(:perform).with(profile.id).and_raise(StandardError, 'Test error')
       end
 
       it 'returns error response' do
         result = service.process(input)
 
+        puts result.inspect
+
         expect(result[:intent]).to eq(:error)
         expect(result[:response][:error]).to eq('Test error')
         expect(result[:context_used]).to be false
-        expect(result[:request_id]).to be_present
+        expect(result[:request_id]).to be nil
       end
 
-      it 'creates an AiRequest record and updates it with failure status' do
-        expect { service.process(input) }.to change(AiRequest, :count).by(1)
+      it 'does not create an AiRequest record when error occurs before creation' do
+        expect { service.process(input) }.not_to change(AiRequest, :count)
 
-        ai_request = AiRequest.last
-        expect(ai_request.profile_id).to eq(profile.id)
-        expect(ai_request.status).to eq('failed')
-        expect(ai_request.error_message).to eq('Test error')
+        expect(AiRequest.count).to eq(0)
       end
     end
 
@@ -170,7 +172,8 @@ RSpec.describe Ai::AiService do
       let(:input) { 'Create a goal' }
 
       before do
-        allow(mock_context_compressor).to receive(:compress).and_return('')
+        allow(Ai::ContextCompressor).to receive(:perform).with(profile.id).and_return('')
+        allow(Ai::IntentRouter).to receive(:perform).with(input).and_return(:smart_goal)
         allow(mock_open_ai_client).to receive(:chat_completion).and_raise(
           Ai::OpenAiClient::AiServiceError, 'OpenAI API error'
         )

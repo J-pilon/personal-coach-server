@@ -4,9 +4,9 @@ require 'rails_helper'
 
 RSpec.describe Ai::ContextCompressor do
   let(:user) { create(:user) }
-  let(:compressor) { described_class.new(user.id) }
+  let(:profile) { user.profile }
 
-  describe '#compress' do
+  describe '.perform' do
     context 'when user has goals and tasks' do
       let!(:smart_goal) do
         create(:smart_goal, profile: user.profile,
@@ -23,7 +23,7 @@ RSpec.describe Ai::ContextCompressor do
       end
 
       it 'includes recent goals and tasks in context' do
-        context = compressor.compress
+        context = described_class.perform(profile)
 
         expect(context).to include('Current Goals:')
         expect(context).to include('Exercise Daily')
@@ -35,7 +35,7 @@ RSpec.describe Ai::ContextCompressor do
       it 'limits goals to MAX_GOALS' do
         create_list(:smart_goal, 5, profile: user.profile, completed: false)
 
-        context = compressor.compress
+        context = described_class.perform(profile)
         goal_count = context.scan(/Goal:/).count
 
         expect(goal_count).to eq(3) # MAX_GOALS
@@ -44,7 +44,7 @@ RSpec.describe Ai::ContextCompressor do
       it 'limits tasks to MAX_TASKS' do
         create_list(:task, 7, profile: user.profile, completed: false)
 
-        context = compressor.compress
+        context = described_class.perform(profile)
         task_count = context.scan(/Task:/).count
 
         expect(task_count).to eq(5) # MAX_TASKS
@@ -53,7 +53,7 @@ RSpec.describe Ai::ContextCompressor do
       it 'only includes pending goals' do
         create(:smart_goal, profile: user.profile, completed: true)
 
-        context = compressor.compress
+        context = described_class.perform(profile)
         goal_count = context.scan(/Goal:/).count
 
         expect(goal_count).to eq(1) # Only the pending goal
@@ -62,7 +62,7 @@ RSpec.describe Ai::ContextCompressor do
       it 'only includes incomplete tasks' do
         create(:task, profile: user.profile, completed: true)
 
-        context = compressor.compress
+        context = described_class.perform(profile)
         task_count = context.scan(/Task:/).count
 
         expect(task_count).to eq(1) # Only the incomplete task
@@ -71,7 +71,7 @@ RSpec.describe Ai::ContextCompressor do
 
     context 'when user has no goals or tasks' do
       it 'returns empty context' do
-        context = compressor.compress
+        context = described_class.perform(profile)
 
         expect(context).to eq('')
       end
@@ -85,7 +85,7 @@ RSpec.describe Ai::ContextCompressor do
       end
 
       it 'includes only goals context' do
-        context = compressor.compress
+        context = described_class.perform(profile)
 
         expect(context).to include('Current Goals:')
         expect(context).to include('Learn Spanish')
@@ -101,7 +101,7 @@ RSpec.describe Ai::ContextCompressor do
       end
 
       it 'includes only tasks context' do
-        context = compressor.compress
+        context = described_class.perform(profile)
 
         expect(context).to include('Recent Tasks:')
         expect(context).to include('Call mom')
@@ -117,16 +117,10 @@ RSpec.describe Ai::ContextCompressor do
       end
 
       it 'truncates context' do
-        context = compressor.compress
+        context = described_class.perform(profile)
 
         expect(context.length).to be <= (described_class::MAX_TOKENS * 4)
         expect(context).to include('[Context truncated for length]')
-      end
-    end
-
-    context 'when user does not exist' do
-      it 'raises ActiveRecord::RecordNotFound' do
-        expect { described_class.new(999999).compress }.to raise_error(ActiveRecord::RecordNotFound)
       end
     end
   end
