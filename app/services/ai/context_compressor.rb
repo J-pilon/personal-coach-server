@@ -6,8 +6,13 @@ module Ai
     MAX_GOALS = 3
     MAX_TASKS = 5
 
-    def initialize(user_id)
-      @user_id = user_id
+    def self.perform(profile)
+      instance = new(profile)
+      instance.compress
+    end
+
+    def initialize(profile)
+      @profile = profile
     end
 
     def compress
@@ -28,13 +33,10 @@ module Ai
 
     private
 
-    attr_reader :user_id
+    attr_reader :profile
 
     def recent_goals_context
-      goals = user.profile.smart_goals
-                  .pending
-                  .order(created_at: :desc)
-                  .limit(MAX_GOALS)
+      goals = find_pending_smart_goals
 
       return nil if goals.empty?
 
@@ -48,10 +50,7 @@ module Ai
     end
 
     def recent_tasks_context
-      tasks = user.profile.tasks
-                  .where(completed: false)
-                  .order(created_at: :desc)
-                  .limit(MAX_TASKS)
+      tasks = find_recent_incomplete_tasks
 
       return nil if tasks.empty?
 
@@ -68,14 +67,18 @@ module Ai
       # Simple truncation to fit within token limit
       max_chars = (MAX_TOKENS * 4) - 50 # Leave room for truncation message
       if context.length > max_chars
-        context[0...max_chars] + "\n\n[Context truncated for length]"
+        "#{context[0...max_chars]}\n\n[Context truncated for length]"
       else
         context
       end
     end
 
-    def user
-      @user ||= User.find(user_id)
+    def find_pending_smart_goals
+      profile.pending_smart_goals(MAX_GOALS)
+    end
+
+    def find_recent_incomplete_tasks
+      profile.recent_incomplete_tasks(MAX_TASKS)
     end
   end
 end

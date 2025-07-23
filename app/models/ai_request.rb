@@ -6,7 +6,7 @@ class AiRequest < ApplicationRecord
   belongs_to :profile
 
   validates :prompt, presence: true
-  validates :job_type, presence: true, inclusion: { in: %w[smart_goal prioritization unknown] }
+  validates :job_type, presence: true, inclusion: { in: %w[smart_goal prioritization] }
   validates :hash_value, presence: true, uniqueness: true
 
   before_validation :generate_hash_value, on: :create
@@ -33,11 +33,17 @@ class AiRequest < ApplicationRecord
 
   # Create a new AI request with automatic hash generation
   def self.create_with_prompt(profile_id:, prompt:, job_type:, status: 'pending')
-    create!(
-      profile_id: profile_id,
-      prompt: prompt,
-      job_type: job_type,
-      status: status
-    )
+    existing_request = find_by_prompt_hash(Digest::SHA256.hexdigest(prompt))
+
+    if existing_request
+      existing_request
+    else
+      create!(
+        profile_id: profile_id,
+        prompt: prompt,
+        job_type: job_type,
+        status: status
+      )
+    end
   end
 end

@@ -115,7 +115,7 @@ RSpec.describe Ai::OpenAiClient do
       end
     end
 
-    context 'when OpenAI API raises an error' do
+    context 'when OpenAI API raises an error', :slow do
       it 'retries up to MAX_RETRIES times' do
         expect(mock_openai_client).to receive(:chat).at_least(3).times.and_raise(
           OpenAI::Error.new('API rate limit exceeded')
@@ -128,7 +128,7 @@ RSpec.describe Ai::OpenAiClient do
       end
     end
 
-    context 'when OpenAI API raises an error with backoff' do
+    context 'when OpenAI API raises an error with backoff', :slow do
       it 'implements exponential backoff' do
         allow(mock_openai_client).to receive(:chat).and_raise(
           OpenAI::Error.new('API rate limit exceeded')

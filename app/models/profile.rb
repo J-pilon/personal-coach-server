@@ -9,6 +9,18 @@ class Profile < ApplicationRecord
 
   validates :onboarding_status, inclusion: { in: %w[incomplete complete] }
 
+  def incomplete_tasks
+    tasks.where(completed: false)
+  end
+
+  def recent_incomplete_tasks(max_tasks = 5)
+    incomplete_tasks.order(created_at: :desc).limit(max_tasks)
+  end
+
+  def pending_smart_goals(max_goals = 3)
+    smart_goals.pending.order(created_at: :desc).limit(max_goals)
+  end
+
   def onboarding_complete?
     onboarding_status == 'complete'
   end
