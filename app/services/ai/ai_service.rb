@@ -2,57 +2,28 @@
 
 module Ai
   class AiService
+    def self.perform(profile_id)
+      instance = new(profile_id)
+      instance.process
+    end
+
     def initialize(profile_id)
       @profile_id = profile_id
-      @intent_router = IntentRouter.new('')
-      @context_compressor = ContextCompressor.new(profile_id)
       @open_ai_client = OpenAiClient.new
     end
 
     def process(input)
+      ai_request = nil
       begin
-        # Route the intent
-        intent = IntentRouter.new(input).route
-
-        # Compress user context
-        context = @context_compressor.compress
-
-        # Build appropriate prompt
+        intent = determine_intent(input)
+        context = compress_context
         prompt = build_prompt(intent, input, context)
-
-        # Create pending AiRequest record
-        ai_request = AiRequest.create_with_prompt(
-          profile_id: @profile_id,
-          prompt: prompt,
-          job_type: intent.to_s,
-          status: 'pending'
-        )
-
-        # Call OpenAI API
+        ai_request = create_ai_request(intent, prompt)
         response = @open_ai_client.chat_completion(prompt)
 
-        # Update with success
-        ai_request.update(
-          status: 'completed'
-        )
-
-        {
-          intent: intent,
-          response: response,
-          context_used: context.present?,
-          request_id: ai_request.id
-        }
+        handle_success(intent, response, context, ai_request)
       rescue StandardError => e
-        # Update existing AiRequest with failure or create new one if it doesn't exist
-        ai_request = update_or_create_error_ai_request(ai_request, input, e.message)
-
-        Rails.logger.error "AI Service error: #{e.message}"
-        {
-          intent: :error,
-          response: { error: e.message },
-          context_used: false,
-          request_id: ai_request.id
-        }
+        handle_error(e, ai_request)
       end
     end
 
@@ -60,25 +31,55 @@ module Ai
 
     attr_reader :profile_id
 
-    def update_or_create_error_ai_request(ai_request, input, error_message)
-      if ai_request
-        # Update existing AiRequest with failure
-        ai_request.update(
-          status: 'failed',
-          error_message: error_message
-        )
-        ai_request
-      else
-        # Create new AiRequest for error case
-        AiRequest.create_with_prompt(
-          profile_id: @profile_id,
-          prompt: input,
-          job_type: 'unknown',
-          status: 'failed'
-        ).tap do |new_ai_request|
-          new_ai_request.update(error_message: error_message)
-        end
-      end
+    def determine_intent(input)
+      IntentRouter.perform(input)
+    end
+
+    def compress_context
+      ContextCompressor.perform(profile_id)
+    end
+
+    def create_ai_request(intent, prompt)
+      AiRequest.create_with_prompt(
+        profile_id: @profile_id,
+        prompt: prompt,
+        job_type: intent.to_s,
+        status: 'pending'
+      )
+    end
+
+    def handle_success(intent, response, context, ai_request)
+      ai_request.update(status: 'completed')
+
+      build_success_response(intent, response, context, ai_request.id)
+    end
+
+    def build_success_response(intent, response, context, request_id)
+      {
+        intent: intent,
+        response: response,
+        context_used: context.present?,
+        request_id: request_id
+      }
+    end
+
+    def handle_error(error, ai_request)
+      ai_request&.update(
+        status: 'failed',
+        error_message: error.message
+      )
+
+      build_error_response(error, ai_request&.id)
+    end
+
+    def build_error_response(error, request_id)
+      Rails.logger.error "AI Service error: #{error.message}"
+      {
+        intent: :error,
+        response: { error: error.message },
+        context_used: false,
+        request_id: request_id
+      }
     end
 
     def build_prompt(intent, input, context)
