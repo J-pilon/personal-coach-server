@@ -7,7 +7,7 @@ module Ai
     DEFAULT_MODEL = 'gpt-4o'
 
     def initialize(api_key = nil)
-      @api_key = api_key || Rails.application.credentials.openai_api_key
+      @api_key = api_key || Rails.application.credentials.openai[:api_key]
       @client = OpenAI::Client.new(access_token: @api_key)
     end
 
@@ -58,8 +58,23 @@ module Ai
       begin
         JSON.parse(content)
       rescue JSON::ParserError
-        # If not valid JSON, return the raw content
-        { content: content }
+        # If not valid JSON, try to extract JSON from markdown code blocks
+        if content.include?('```json')
+          json_match = content.match(/```json\s*\n(.*?)\n```/m)
+          if json_match
+            begin
+              JSON.parse(json_match[1])
+            rescue JSON::ParserError
+              # If still can't parse, return the raw content
+              { content: content }
+            end
+          else
+            { content: content }
+          end
+        else
+          # If not valid JSON, return the raw content
+          { content: content }
+        end
       end
     end
 
