@@ -13,7 +13,7 @@ module Api
           return
         end
 
-        result = Ai::AiService.new(current_user.profile.id).process(input)
+        result = Ai::AiService.new(current_user.profile).process(input)
 
         if result[:intent] == :error
           render json: { error: result[:response][:error] }, status: :internal_server_error

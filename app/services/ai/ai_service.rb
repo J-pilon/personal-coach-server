@@ -2,13 +2,8 @@
 
 module Ai
   class AiService
-    def self.perform(profile_id)
-      instance = new(profile_id)
-      instance.process
-    end
-
-    def initialize(profile_id)
-      @profile_id = profile_id
+    def initialize(profile)
+      @profile = profile
       @open_ai_client = OpenAiClient.new
     end
 
@@ -29,19 +24,19 @@ module Ai
 
     private
 
-    attr_reader :profile_id
+    attr_reader :profile
 
     def determine_intent(input)
       IntentRouter.perform(input)
     end
 
     def compress_context
-      ContextCompressor.perform(profile_id)
+      ContextCompressor.perform(profile)
     end
 
     def create_ai_request(intent, prompt)
       AiRequest.create_with_prompt(
-        profile_id: @profile_id,
+        profile_id: profile.id,
         prompt: prompt,
         job_type: intent.to_s,
         status: 'pending'
@@ -64,12 +59,12 @@ module Ai
     end
 
     def handle_error(error, ai_request)
-      ai_request&.update(
+      ai_request.update(
         status: 'failed',
         error_message: error.message
       )
 
-      build_error_response(error, ai_request&.id)
+      build_error_response(error, ai_request.id)
     end
 
     def build_error_response(error, request_id)
