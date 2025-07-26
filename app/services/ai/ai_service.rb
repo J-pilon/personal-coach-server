@@ -59,12 +59,17 @@ module Ai
     end
 
     def handle_error(error, ai_request)
-      ai_request.update(
-        status: 'failed',
-        error_message: error.message
-      )
+      if ai_request
+        ai_request.update(
+          status: 'failed',
+          error_message: error.message
+        )
+        request_id = ai_request.id
+      else
+        request_id = nil
+      end
 
-      build_error_response(error, ai_request.id)
+      build_error_response(error, request_id)
     end
 
     def build_error_response(error, request_id)

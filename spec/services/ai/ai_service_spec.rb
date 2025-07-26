@@ -5,7 +5,7 @@ require 'rails_helper'
 RSpec.describe Ai::AiService do
   let(:user) { create(:user) }
   let(:profile) { user.profile }
-  let(:service) { described_class.new(profile.id) }
+  let(:service) { described_class.new(profile) }
 
   describe '#process' do
     let(:mock_open_ai_client) { instance_double(Ai::OpenAiClient) }
@@ -20,7 +20,7 @@ RSpec.describe Ai::AiService do
       let(:ai_response) { { 'specific' => 'Exercise for 30 minutes daily' } }
 
       before do
-        allow(Ai::ContextCompressor).to receive(:perform).with(profile.id).and_return(context)
+        allow(Ai::ContextCompressor).to receive(:perform).with(profile).and_return(context)
         allow(Ai::IntentRouter).to receive(:perform).with(input).and_return(:smart_goal)
         allow(mock_open_ai_client).to receive(:chat_completion).and_return(ai_response)
       end
@@ -67,7 +67,7 @@ RSpec.describe Ai::AiService do
       let(:ai_response) { [{ 'task' => 'exercise', 'priority' => 1 }] }
 
       before do
-        allow(Ai::ContextCompressor).to receive(:perform).with(profile.id).and_return(context)
+        allow(Ai::ContextCompressor).to receive(:perform).with(profile).and_return(context)
         allow(Ai::IntentRouter).to receive(:perform).with(input).and_return(:prioritization)
         allow(mock_open_ai_client).to receive(:chat_completion).and_return(ai_response)
       end
@@ -113,7 +113,7 @@ RSpec.describe Ai::AiService do
       let(:ai_response) { { 'specific' => 'Test goal' } }
 
       before do
-        allow(Ai::ContextCompressor).to receive(:perform).with(profile.id).and_return('')
+        allow(Ai::ContextCompressor).to receive(:perform).with(profile).and_return('')
         allow(Ai::IntentRouter).to receive(:perform).with(input).and_return(:smart_goal)
         allow(mock_open_ai_client).to receive(:chat_completion).and_return(ai_response)
       end
@@ -147,7 +147,7 @@ RSpec.describe Ai::AiService do
       let(:input) { 'Create a goal' }
 
       before do
-        allow(Ai::ContextCompressor).to receive(:perform).with(profile.id).and_raise(StandardError, 'Test error')
+        allow(Ai::ContextCompressor).to receive(:perform).with(profile).and_raise(StandardError, 'Test error')
       end
 
       it 'returns error response' do
@@ -172,7 +172,7 @@ RSpec.describe Ai::AiService do
       let(:input) { 'Create a goal' }
 
       before do
-        allow(Ai::ContextCompressor).to receive(:perform).with(profile.id).and_return('')
+        allow(Ai::ContextCompressor).to receive(:perform).with(profile).and_return('')
         allow(Ai::IntentRouter).to receive(:perform).with(input).and_return(:smart_goal)
         allow(mock_open_ai_client).to receive(:chat_completion).and_raise(
           Ai::OpenAiClient::AiServiceError, 'OpenAI API error'
