@@ -18,6 +18,7 @@ Rails.application.routes.draw do
       end
       resources :smart_goals
       post :ai, to: 'ai#create'
+      post 'ai/suggested_tasks', to: 'ai#suggested_tasks'
     end
   end
 end
