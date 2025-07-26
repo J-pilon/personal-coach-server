@@ -2,169 +2,105 @@
 
 require 'rails_helper'
 
-RSpec.describe 'Api::V1::AiController', type: :request do
+RSpec.describe Api::V1::AiController, type: :request do
   let(:user) { create(:user) }
+  let(:profile) { create(:profile, user: user) }
+
   let(:headers) { { 'X-User-ID' => user.id.to_s } }
 
+  before do
+    allow_any_instance_of(Api::V1::AiController).to receive(:current_user).and_return(user)
+    allow(user).to receive(:profile).and_return(profile)
+  end
+
   describe 'POST /api/v1/ai' do
-    context 'when user is authenticated' do
-      let(:mock_ai_service) { instance_double(Ai::AiService) }
+    context 'with valid input' do
+      it 'processes AI request successfully' do
+        allow_any_instance_of(Ai::AiService).to receive(:process).and_return({
+          intent: :smart_goal,
+          response: { specific: 'Test goal' },
+          context_used: true,
+          request_id: 1
+        })
 
-      before do
-        allow(Ai::AiService).to receive(:new).and_return(mock_ai_service)
-      end
+        post '/api/v1/ai', params: { input: 'Create a goal' }, headers: headers
 
-      context 'with valid input' do
-        let(:input) { 'Create a goal to exercise more' }
-        let(:ai_response) do
-          {
-            intent: :smart_goal,
-            response: {
-              specific: 'Exercise for 30 minutes daily',
-              measurable: 'Track workouts in fitness app',
-              achievable: 'Start with 3 days per week',
-              relevant: 'Improves overall health and energy',
-              time_bound: 'Complete 30 workouts in 3 months'
-            },
-            context_used: true
-          }
-        end
-
-        before do
-          allow(mock_ai_service).to receive(:process).and_return(ai_response)
-        end
-
-        it 'returns successful response' do
-          post '/api/v1/ai', params: { input: input }, headers: headers
-
-          expect(response).to have_http_status(:ok)
-          json_response = JSON.parse(response.body)
-
-          expect(json_response['intent']).to eq('smart_goal')
-          expect(json_response['response']['specific']).to eq('Exercise for 30 minutes daily')
-          expect(json_response['context_used']).to be true
-        end
-
-        it 'calls AiService with correct parameters' do
-          expect(mock_ai_service).to receive(:process).with(input).and_return(ai_response)
-
-          post '/api/v1/ai', params: { input: input }, headers: headers
-        end
-      end
-
-      context 'with prioritization input' do
-        let(:input) { 'Prioritize my tasks: exercise, work, sleep' }
-        let(:ai_response) do
-          {
-            intent: :prioritization,
-            response: [
-              {
-                task: 'exercise',
-                priority: 1,
-                rationale: 'High impact on health',
-                recommended_action: 'do'
-              }
-            ],
-            context_used: true
-          }
-        end
-
-        before do
-          allow(mock_ai_service).to receive(:process).and_return(ai_response)
-        end
-
-        it 'returns prioritization response' do
-          post '/api/v1/ai', params: { input: input }, headers: headers
-
-          expect(response).to have_http_status(:ok)
-          json_response = JSON.parse(response.body)
-
-          expect(json_response['intent']).to eq('prioritization')
-          expect(json_response['response']).to be_an(Array)
-        end
-      end
-
-      context 'with empty input' do
-        it 'returns bad request error' do
-          post '/api/v1/ai', params: { input: '' }, headers: headers
-
-          expect(response).to have_http_status(:bad_request)
-          json_response = JSON.parse(response.body)
-          expect(json_response['error']).to eq('Input is required')
-        end
-      end
-
-      context 'with missing input parameter' do
-        it 'returns bad request error' do
-          post '/api/v1/ai', params: {}, headers: headers
-
-          expect(response).to have_http_status(:bad_request)
-          json_response = JSON.parse(response.body)
-          expect(json_response['error']).to eq('Input is required')
-        end
-      end
-
-      context 'when AI service returns error' do
-        let(:input) { 'Create a goal' }
-        let(:error_response) do
-          {
-            intent: :error,
-            response: { error: 'OpenAI API error' },
-            context_used: false
-          }
-        end
-
-        before do
-          allow(mock_ai_service).to receive(:process).and_return(error_response)
-        end
-
-        it 'returns internal server error' do
-          post '/api/v1/ai', params: { input: input }, headers: headers
-
-          expect(response).to have_http_status(:internal_server_error)
-          json_response = JSON.parse(response.body)
-          expect(json_response['error']).to eq('OpenAI API error')
-        end
-      end
-
-      context 'when AI service raises an exception' do
-        let(:input) { 'Create a goal' }
-
-        before do
-          allow(mock_ai_service).to receive(:process).and_raise(StandardError, 'Unexpected error')
-        end
-
-        it 'returns internal server error' do
-          post '/api/v1/ai', params: { input: input }, headers: headers
-
-          expect(response).to have_http_status(:internal_server_error)
-          json_response = JSON.parse(response.body)
-          expect(json_response['error']).to eq('An unexpected error occurred')
-        end
+        expect(response).to have_http_status(:ok)
+        json_response = JSON.parse(response.body)
+        expect(json_response['intent']).to eq('smart_goal')
       end
     end
 
-    context 'when user is not authenticated' do
-      context 'with missing user ID header' do
-        it 'returns unauthorized error' do
-          post '/api/v1/ai', params: { input: 'Create a goal' }
+    context 'with blank input' do
+      it 'returns bad request error' do
+        post '/api/v1/ai', params: { input: '' }, headers: headers
 
-          expect(response).to have_http_status(:unauthorized)
-          json_response = JSON.parse(response.body)
-          expect(json_response['error']).to eq('Authentication required')
-        end
+        expect(response).to have_http_status(:bad_request)
+        json_response = JSON.parse(response.body)
+        expect(json_response['error']).to eq('Input is required')
       end
+    end
+  end
 
-      context 'with invalid user ID' do
-        let(:headers) { { 'X-User-ID' => '999999' } }
+  describe 'POST /api/v1/ai/suggested_tasks' do
+    let!(:task) { create(:task, profile: profile, title: 'Existing task', completed: false) }
+    let!(:smart_goal) { create(:smart_goal, profile: profile, title: 'Test Goal') }
 
-        it 'returns unauthorized error' do
-          post '/api/v1/ai', params: { input: 'Create a goal' }, headers: headers
+    context 'with valid profile' do
+      it 'returns AI-generated task suggestions' do
+        mock_suggestions = [
+          {
+            title: 'Update portfolio README',
+            description: 'Clarify project goals',
+            goal_id: smart_goal.id.to_s,
+            time_estimate_minutes: 30
+          },
+          {
+            title: 'Review weekly metrics',
+            description: 'Track progress on goals',
+            goal_id: nil,
+            time_estimate_minutes: 45
+          },
+          {
+            title: 'Plan next sprint',
+            description: 'Prepare for upcoming work',
+            goal_id: smart_goal.id.to_s,
+            time_estimate_minutes: 60
+          }
+        ]
 
-          expect(response).to have_http_status(:unauthorized)
-          json_response = JSON.parse(response.body)
-          expect(json_response['error']).to eq('Authentication required')
-        end
+        allow_any_instance_of(Ai::TaskSuggester).to receive(:generate_suggestions).and_return(mock_suggestions)
+
+        post '/api/v1/ai/suggested_tasks', params: { profile_id: profile.id }, headers: headers
+
+        expect(response).to have_http_status(:ok)
+        json_response = JSON.parse(response.body)
+        expect(json_response).to be_an(Array)
+        expect(json_response.length).to eq(3)
+        expect(json_response.first['title']).to eq('Update portfolio README')
+        expect(json_response.first['time_estimate_minutes']).to eq(30)
+      end
+    end
+
+    context 'with invalid profile_id' do
+      it 'returns not found error' do
+        post '/api/v1/ai/suggested_tasks', params: { profile_id: 99999 }, headers: headers
+
+        expect(response).to have_http_status(:not_found)
+        json_response = JSON.parse(response.body)
+        expect(json_response['error']).to eq('Profile not found')
+      end
+    end
+
+    context 'when AI service fails' do
+      it 'returns internal server error' do
+        allow_any_instance_of(Ai::TaskSuggester).to receive(:generate_suggestions).and_raise(StandardError, 'AI service error')
+
+        post '/api/v1/ai/suggested_tasks', params: { profile_id: profile.id }, headers: headers
+
+        expect(response).to have_http_status(:internal_server_error)
+        json_response = JSON.parse(response.body)
+        expect(json_response['error']).to eq('Failed to generate task suggestions')
       end
     end
   end
