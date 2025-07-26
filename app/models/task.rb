@@ -2,6 +2,7 @@
 
 class Task < ApplicationRecord
   belongs_to :profile
+  belongs_to :smart_goal, optional: true
 
   validates :title, presence: true
 
@@ -10,4 +11,8 @@ class Task < ApplicationRecord
     defer: 2,
     delegate: 3
   }
+
+  scope :incomplete, -> { where(completed: false) }
+  scope :completed, -> { where(completed: true) }
+  scope :by_priority, -> { order(priority: :desc) }
 end
