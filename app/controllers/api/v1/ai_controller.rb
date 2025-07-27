@@ -29,6 +29,20 @@ module Api
         Rails.logger.error "AI Controller error: #{e.message}"
         render json: { error: 'An unexpected error occurred' }, status: :internal_server_error
       end
+
+      def suggested_tasks
+        profile_id = params[:profile_id] || current_user.profile.id
+        profile = Profile.find(profile_id)
+
+        suggestions = Ai::TaskSuggester.new(profile).generate_suggestions
+
+        render json: suggestions
+      rescue ActiveRecord::RecordNotFound
+        render json: { error: 'Profile not found' }, status: :not_found
+      rescue StandardError => e
+        Rails.logger.error "Task suggestions error: #{e.message}"
+        render json: { error: 'Failed to generate task suggestions' }, status: :internal_server_error
+      end
     end
   end
 end

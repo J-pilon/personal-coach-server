@@ -6,7 +6,7 @@ class AiRequest < ApplicationRecord
   belongs_to :profile
 
   validates :prompt, presence: true
-  validates :job_type, presence: true, inclusion: { in: %w[smart_goal prioritization] }
+  validates :job_type, presence: true, inclusion: { in: %w[smart_goal prioritization task_suggestion] }
   validates :hash_value, presence: true, uniqueness: true
 
   before_validation :generate_hash_value, on: :create

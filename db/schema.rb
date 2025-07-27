@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_07_22_192643) do
+ActiveRecord::Schema[7.1].define(version: 2025_07_26_191451) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -69,7 +69,9 @@ ActiveRecord::Schema[7.1].define(version: 2025_07_22_192643) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "priority"
+    t.bigint "smart_goal_id"
     t.index ["profile_id"], name: "index_tasks_on_profile_id"
+    t.index ["smart_goal_id"], name: "index_tasks_on_smart_goal_id"
   end
 
   create_table "users", force: :cascade do |t|
@@ -84,4 +86,5 @@ ActiveRecord::Schema[7.1].define(version: 2025_07_22_192643) do
   add_foreign_key "profiles", "users"
   add_foreign_key "smart_goals", "profiles"
   add_foreign_key "tasks", "profiles"
+  add_foreign_key "tasks", "smart_goals"
 end

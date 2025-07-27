@@ -2,6 +2,7 @@
 
 class SmartGoal < ApplicationRecord
   belongs_to :profile
+  has_many :tasks, dependent: :nullify
 
   validates :title, presence: true
   validates :timeframe, inclusion: { in: %w[1_month 3_months 6_months] }
