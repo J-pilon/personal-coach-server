@@ -1,0 +1,12 @@
+#!/usr/bin/env ruby
+
+# Simple script to run RuboCop with common options
+# Usage: bin/rubocop [files_or_directories]
+
+require 'bundler/setup'
+
+# Default to checking all Ruby files if no arguments provided
+targets = ARGV.empty? ? %w[app lib spec] : ARGV
+
+# Run RuboCop with auto-correct for correctable offenses
+system("bundle exec rubocop --autocorrect --format simple #{targets.join(' ')}")
