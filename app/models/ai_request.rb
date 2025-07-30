@@ -35,15 +35,11 @@ class AiRequest < ApplicationRecord
   def self.create_with_prompt(profile_id:, prompt:, job_type:, status: 'pending')
     existing_request = find_by_prompt_hash(Digest::SHA256.hexdigest(prompt))
 
-    if existing_request
-      existing_request
-    else
-      create!(
-        profile_id: profile_id,
-        prompt: prompt,
-        job_type: job_type,
-        status: status
-      )
-    end
+    existing_request || create!(
+      profile_id: profile_id,
+      prompt: prompt,
+      job_type: job_type,
+      status: status
+    )
   end
 end
