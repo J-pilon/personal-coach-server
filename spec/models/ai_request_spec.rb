@@ -9,14 +9,14 @@ RSpec.describe AiRequest, type: :model do
   let(:job_type) { 'smart_goal' }
 
   describe 'associations' do
-    it { should belong_to(:profile) }
+    it { is_expected.to belong_to(:profile) }
   end
 
   describe 'validations' do
     subject { build(:ai_request) }
 
-    it { should validate_presence_of(:prompt) }
-    it { should validate_presence_of(:job_type) }
+    it { is_expected.to validate_presence_of(:prompt) }
+    it { is_expected.to validate_presence_of(:job_type) }
 
     it 'validates job_type inclusion' do
       valid_types = %w[smart_goal prioritization]
@@ -84,13 +84,13 @@ RSpec.describe AiRequest, type: :model do
 
   describe '.create_with_prompt' do
     it 'creates a new AI request with automatic hash generation' do
-      expect {
+      expect do
         described_class.create_with_prompt(
           profile_id: profile.id,
           prompt: prompt,
           job_type: job_type
         )
-      }.to change(described_class, :count).by(1)
+      end.to change(described_class, :count).by(1)
 
       ai_request = described_class.last
       expect(ai_request.profile).to eq(profile)
@@ -101,27 +101,27 @@ RSpec.describe AiRequest, type: :model do
     end
 
     it 'creates a new AI request with custom status' do
-      expect {
+      expect do
         described_class.create_with_prompt(
           profile_id: profile.id,
           prompt: prompt,
           job_type: job_type,
           status: 'completed'
         )
-      }.to change(described_class, :count).by(1)
+      end.to change(described_class, :count).by(1)
 
       ai_request = described_class.last
       expect(ai_request.status).to eq('completed')
     end
 
     it 'raises validation error for invalid job_type' do
-      expect {
+      expect do
         described_class.create_with_prompt(
           profile_id: profile.id,
           prompt: prompt,
           job_type: 'invalid_type'
         )
-      }.to raise_error(ActiveRecord::RecordInvalid)
+      end.to raise_error(ActiveRecord::RecordInvalid)
     end
   end
 

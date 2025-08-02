@@ -22,7 +22,7 @@ RSpec.describe 'Api::V1::Profiles', type: :request do
 
     context 'when profile does not exist' do
       it 'returns not found status' do
-        get api_v1_profile_path(999999)
+        get api_v1_profile_path(999_999)
         expect(response).to have_http_status(:not_found)
       end
     end
@@ -122,7 +122,7 @@ RSpec.describe 'Api::V1::Profiles', type: :request do
 
     context 'when profile does not exist' do
       it 'returns not found status' do
-        patch api_v1_profile_path(999999), params: { profile: { first_name: 'John' } }
+        patch api_v1_profile_path(999_999), params: { profile: { first_name: 'John' } }
         expect(response).to have_http_status(:not_found)
       end
     end
@@ -182,7 +182,7 @@ RSpec.describe 'Api::V1::Profiles', type: :request do
 
     context 'when profile does not exist' do
       it 'returns not found status' do
-        patch complete_onboarding_api_v1_profile_path(999999)
+        patch complete_onboarding_api_v1_profile_path(999_999)
         expect(response).to have_http_status(:not_found)
       end
     end

@@ -30,7 +30,8 @@ RSpec.describe Ai::TaskSuggester do
     end
 
     it 'creates an AI request record' do
-      mock_suggestions = [{ 'title' => 'Test task', 'description' => 'Test', 'goal_id' => nil, 'time_estimate_minutes' => 30 }]
+      mock_suggestions = [{ 'title' => 'Test task', 'description' => 'Test', 'goal_id' => nil,
+                            'time_estimate_minutes' => 30 }]
       allow_any_instance_of(Ai::OpenAiClient).to receive(:chat_completion).and_return(mock_suggestions)
 
       expect { task_suggester.generate_suggestions }.to change(AiRequest, :count).by(1)
@@ -42,7 +43,8 @@ RSpec.describe Ai::TaskSuggester do
 
     context 'when AI service fails' do
       it 'raises an error and marks request as failed' do
-        allow_any_instance_of(Ai::OpenAiClient).to receive(:chat_completion).and_raise(StandardError, 'AI service error')
+        allow_any_instance_of(Ai::OpenAiClient).to receive(:chat_completion).and_raise(StandardError,
+                                                                                       'AI service error')
 
         expect { task_suggester.generate_suggestions }.to raise_error(StandardError)
 

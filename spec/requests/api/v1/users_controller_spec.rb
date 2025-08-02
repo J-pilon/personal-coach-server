@@ -14,15 +14,15 @@ RSpec.describe 'Api::V1::Users', type: :request do
       end
 
       it 'creates a new user' do
-        expect {
+        expect do
           post api_v1_users_path, params: valid_params
-        }.to change(User, :count).by(1)
+        end.to change(User, :count).by(1)
       end
 
       it 'creates a profile for the user' do
-        expect {
+        expect do
           post api_v1_users_path, params: valid_params
-        }.to change(Profile, :count).by(1)
+        end.to change(Profile, :count).by(1)
       end
 
       it 'returns the user and profile data' do
@@ -49,9 +49,9 @@ RSpec.describe 'Api::V1::Users', type: :request do
         end
 
         it 'does not create a user' do
-          expect {
+          expect do
             post api_v1_users_path, params: invalid_params
-          }.not_to change(User, :count)
+          end.not_to change(User, :count)
         end
 
         it 'returns unprocessable entity status' do
@@ -102,9 +102,9 @@ RSpec.describe 'Api::V1::Users', type: :request do
         end
 
         it 'does not create a user' do
-          expect {
+          expect do
             post api_v1_users_path, params: duplicate_params
-          }.not_to change(User, :count)
+          end.not_to change(User, :count)
         end
 
         it 'returns unprocessable entity status' do
@@ -131,9 +131,9 @@ RSpec.describe 'Api::V1::Users', type: :request do
         end
 
         it 'does not create a user' do
-          expect {
+          expect do
             post api_v1_users_path, params: invalid_params
-          }.not_to change(User, :count)
+          end.not_to change(User, :count)
         end
 
         it 'returns unprocessable entity status' do
@@ -169,12 +169,12 @@ RSpec.describe 'Api::V1::Users', type: :request do
 
     context 'when user does not exist' do
       it 'returns not found status' do
-        get api_v1_user_path(999999)
+        get api_v1_user_path(999_999)
         expect(response).to have_http_status(:not_found)
       end
 
       it 'returns error message' do
-        get api_v1_user_path(999999)
+        get api_v1_user_path(999_999)
         json_response = JSON.parse(response.body)
         expect(json_response['errors']).to eq('User could not be found.')
       end

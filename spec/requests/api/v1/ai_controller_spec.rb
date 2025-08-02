@@ -17,11 +17,11 @@ RSpec.describe Api::V1::AiController, type: :request do
     context 'with valid input' do
       it 'processes AI request successfully' do
         allow_any_instance_of(Ai::AiService).to receive(:process).and_return({
-          intent: :smart_goal,
-          response: { specific: 'Test goal' },
-          context_used: true,
-          request_id: 1
-        })
+                                                                               intent: :smart_goal,
+                                                                               response: { specific: 'Test goal' },
+                                                                               context_used: true,
+                                                                               request_id: 1
+                                                                             })
 
         post '/api/v1/ai', params: { input: 'Create a goal' }, headers: headers
 
@@ -84,7 +84,7 @@ RSpec.describe Api::V1::AiController, type: :request do
 
     context 'with invalid profile_id' do
       it 'returns not found error' do
-        post '/api/v1/ai/suggested_tasks', params: { profile_id: 99999 }, headers: headers
+        post '/api/v1/ai/suggested_tasks', params: { profile_id: 99_999 }, headers: headers
 
         expect(response).to have_http_status(:not_found)
         json_response = JSON.parse(response.body)
@@ -94,7 +94,8 @@ RSpec.describe Api::V1::AiController, type: :request do
 
     context 'when AI service fails' do
       it 'returns internal server error' do
-        allow_any_instance_of(Ai::TaskSuggester).to receive(:generate_suggestions).and_raise(StandardError, 'AI service error')
+        allow_any_instance_of(Ai::TaskSuggester).to receive(:generate_suggestions).and_raise(StandardError,
+                                                                                             'AI service error')
 
         post '/api/v1/ai/suggested_tasks', params: { profile_id: profile.id }, headers: headers
 

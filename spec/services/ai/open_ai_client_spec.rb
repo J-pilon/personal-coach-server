@@ -34,9 +34,9 @@ RSpec.describe Ai::OpenAiClient do
         result = client.chat_completion(prompt)
 
         expect(result).to eq({
-          'specific' => 'Test goal',
-          'measurable' => 'Test metric'
-        })
+                               'specific' => 'Test goal',
+                               'measurable' => 'Test metric'
+                             })
       end
 
       it 'calls OpenAI with correct parameters' do
