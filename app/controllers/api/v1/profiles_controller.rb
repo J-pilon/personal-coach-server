@@ -4,7 +4,7 @@ module Api
   module V1
     class ProfilesController < ApplicationController
       def show
-        user = current_user
+        user = current_api_v1_user
         if user
           profile = user.profile
           if profile.id.to_s == params[:id]
@@ -18,7 +18,7 @@ module Api
       end
 
       def update
-        user = current_user
+        user = current_api_v1_user
         if user
           profile = user.profile
           if profile.id.to_s == params[:id]
@@ -36,7 +36,7 @@ module Api
       end
 
       def complete_onboarding
-        user = current_user
+        user = current_api_v1_user
         if user
           profile = user.profile
           if profile.id.to_s == params[:id]

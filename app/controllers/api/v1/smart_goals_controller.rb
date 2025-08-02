@@ -5,13 +5,13 @@ module Api
     # Controller for managing user smart goals
     class SmartGoalsController < ApplicationController
       def index
-        user = current_user
+        user = current_api_v1_user
         smart_goals = user.profile.smart_goals
         render json: smart_goals
       end
 
       def create
-        user = current_user
+        user = current_api_v1_user
         smart_goal = user.profile.smart_goals.build(smart_goal_params)
 
         if smart_goal.save
@@ -22,7 +22,7 @@ module Api
       end
 
       def update
-        user = current_user
+        user = current_api_v1_user
         smart_goal = user.profile.smart_goals.find(params[:id])
 
         if smart_goal.update(smart_goal_params)
@@ -33,7 +33,7 @@ module Api
       end
 
       def destroy
-        user = current_user
+        user = current_api_v1_user
         smart_goal = user.profile.smart_goals.find(params[:id])
         smart_goal.destroy
         head :no_content

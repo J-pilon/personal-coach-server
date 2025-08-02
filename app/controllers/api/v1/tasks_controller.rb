@@ -7,7 +7,7 @@ module Api
       before_action :set_task, only: %i[show update destroy]
 
       def index
-        user = current_user
+        user = current_api_v1_user
         @tasks = user.profile.tasks
         render json: @tasks
       end
@@ -17,14 +17,14 @@ module Api
       end
 
       def create
-        user = current_user
+        user = current_api_v1_user
         @task = user.profile.tasks.build(task_params)
         if @task.save
           render json: @task, status: :created
         else
           render json: @task.errors, status: :unprocessable_entity
         end
-      rescue ArgumentError => e
+      rescue ArgumentError
         render json: { errors: ['Invalid action_category value'] }, status: :unprocessable_entity
       end
 
@@ -34,7 +34,7 @@ module Api
         else
           render json: @task.errors, status: :unprocessable_entity
         end
-      rescue ArgumentError => e
+      rescue ArgumentError
         render json: { errors: ['Invalid action_category value'] }, status: :unprocessable_entity
       end
 
@@ -46,7 +46,7 @@ module Api
       private
 
       def set_task
-        user = current_user
+        user = current_api_v1_user
         @task = user.profile.tasks.find(params[:id])
       end
 
