@@ -12,7 +12,6 @@ module Ai
     end
 
     def chat_completion(prompt, temperature: DEFAULT_TEMPERATURE, model: DEFAULT_MODEL)
-      response = nil
       retries = 0
 
       begin
@@ -50,9 +49,7 @@ module Ai
     def parse_response(response)
       content = response.dig('choices', 0, 'message', 'content')
 
-      if content.blank?
-        raise AiServiceError, 'Empty response from OpenAI API'
-      end
+      raise AiServiceError, 'Empty response from OpenAI API' if content.blank?
 
       # Try to parse as JSON first
       begin
