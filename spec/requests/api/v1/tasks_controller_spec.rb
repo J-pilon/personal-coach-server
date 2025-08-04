@@ -4,6 +4,10 @@ RSpec.describe 'Api::V1::Tasks', type: :request do
   let!(:user) { create(:user) }
   let!(:profile) { user.profile }
 
+  before do
+    sign_in user
+  end
+
   describe 'GET /api/v1/tasks' do
     context 'when user has tasks' do
       let!(:tasks) { create_list(:task, 3, profile: profile) }
@@ -121,7 +125,7 @@ RSpec.describe 'Api::V1::Tasks', type: :request do
         let(:invalid_params) do
           {
             task: {
-              description: 'Some description',
+              description: 'Write comprehensive documentation for the new feature',
               completed: false,
               action_category: 'do'
             }
@@ -136,13 +140,15 @@ RSpec.describe 'Api::V1::Tasks', type: :request do
 
         it 'returns unprocessable entity status' do
           post api_v1_tasks_path, params: invalid_params
+
           expect(response).to have_http_status(:unprocessable_entity)
         end
 
         it 'returns error messages' do
           post api_v1_tasks_path, params: invalid_params
+
           json_response = JSON.parse(response.body)
-          expect(json_response['title']).to include("can't be blank")
+          expect(json_response['errors']).to include("Title can't be blank")
         end
       end
 
@@ -150,8 +156,9 @@ RSpec.describe 'Api::V1::Tasks', type: :request do
         let(:invalid_params) do
           {
             task: {
-              title: 'Some task',
-              description: 'Some description',
+              title: 'Complete project documentation',
+              description: 'Write comprehensive documentation for the new feature',
+              completed: false,
               action_category: 'invalid_category'
             }
           }
@@ -159,6 +166,7 @@ RSpec.describe 'Api::V1::Tasks', type: :request do
 
         it 'returns unprocessable entity status' do
           post api_v1_tasks_path, params: invalid_params
+
           expect(response).to have_http_status(:unprocessable_entity)
         end
       end
@@ -173,9 +181,9 @@ RSpec.describe 'Api::V1::Tasks', type: :request do
         {
           task: {
             title: 'Updated task title',
-            description: 'Updated description',
+            description: 'Updated task description',
             completed: true,
-            action_category: 'defer'
+            action_category: 'delegate'
           }
         }
       end
@@ -187,9 +195,9 @@ RSpec.describe 'Api::V1::Tasks', type: :request do
         json_response = JSON.parse(response.body)
 
         expect(json_response['title']).to eq('Updated task title')
-        expect(json_response['description']).to eq('Updated description')
+        expect(json_response['description']).to eq('Updated task description')
         expect(json_response['completed']).to eq(true)
-        expect(json_response['action_category']).to eq('defer')
+        expect(json_response['action_category']).to eq('delegate')
       end
 
       it 'persists the changes to the database' do
@@ -197,8 +205,9 @@ RSpec.describe 'Api::V1::Tasks', type: :request do
 
         task.reload
         expect(task.title).to eq('Updated task title')
+        expect(task.description).to eq('Updated task description')
         expect(task.completed).to eq(true)
-        expect(task.action_category).to eq('defer')
+        expect(task.action_category).to eq('delegate')
       end
     end
 
@@ -228,34 +237,38 @@ RSpec.describe 'Api::V1::Tasks', type: :request do
       let(:invalid_params) do
         {
           task: {
-            title: ''
+            action_category: 'invalid_category'
           }
         }
       end
 
       it 'returns unprocessable entity status' do
         patch api_v1_task_path(task), params: invalid_params
+
         expect(response).to have_http_status(:unprocessable_entity)
       end
 
       it 'returns error messages' do
         patch api_v1_task_path(task), params: invalid_params
+
         json_response = JSON.parse(response.body)
-        expect(json_response['title']).to include("can't be blank")
+        expect(json_response['errors']).to include('Action category is not included in the list')
       end
 
       it 'does not update the task' do
-        original_title = task.title
+        original_action_category = task.action_category
+
         patch api_v1_task_path(task), params: invalid_params
 
         task.reload
-        expect(task.title).to eq(original_title)
+        expect(task.action_category).to eq(original_action_category)
       end
     end
 
     context 'when task does not exist' do
       it 'returns not found status' do
-        patch api_v1_task_path(999_999), params: { task: { title: 'Updated' } }
+        patch api_v1_task_path(999_999), params: { task: { title: 'Updated Title' } }
+
         expect(response).to have_http_status(:not_found)
       end
     end
@@ -265,7 +278,8 @@ RSpec.describe 'Api::V1::Tasks', type: :request do
       let!(:other_task) { create(:task, profile: other_user.profile) }
 
       it 'returns not found status' do
-        patch api_v1_task_path(other_task), params: { task: { title: 'Updated' } }
+        patch api_v1_task_path(other_task), params: { task: { title: 'Updated Title' } }
+
         expect(response).to have_http_status(:not_found)
       end
     end
@@ -283,6 +297,7 @@ RSpec.describe 'Api::V1::Tasks', type: :request do
 
       it 'returns no content status' do
         delete api_v1_task_path(task)
+
         expect(response).to have_http_status(:no_content)
       end
     end
@@ -290,6 +305,7 @@ RSpec.describe 'Api::V1::Tasks', type: :request do
     context 'when task does not exist' do
       it 'returns not found status' do
         delete api_v1_task_path(999_999)
+
         expect(response).to have_http_status(:not_found)
       end
     end
@@ -300,6 +316,7 @@ RSpec.describe 'Api::V1::Tasks', type: :request do
 
       it 'returns not found status' do
         delete api_v1_task_path(other_task)
+
         expect(response).to have_http_status(:not_found)
       end
     end
