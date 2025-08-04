@@ -1,3 +1,5 @@
+require_relative '../../concerns/rack_sessions_fix'
+
 module Api
   module V1
     class SessionsController < Devise::SessionsController
@@ -7,22 +9,42 @@ module Api
       def create
         Rails.logger.info "SessionsController#create called with params: #{params.inspect}"
 
-        # Get user parameters
         user_params = sign_in_params
-        return render json: { error: 'Invalid parameters' }, status: :bad_request unless user_params
+        Rails.logger.info "User params: #{user_params.inspect}"
+
+        unless user_params
+          Rails.logger.info "No user params found, returning unauthorized"
+          return render json: {
+            status: {
+              code: 401,
+              message: 'Invalid parameters'
+            }
+          }, status: :unauthorized
+        end
 
         # Find and authenticate user
         user = User.find_by(email: user_params[:email])
+        Rails.logger.info "Found user: #{user.inspect}"
 
         if user && user.valid_password?(user_params[:password])
-          # Sign in the user - Devise will handle JWT token generation
+          Rails.logger.info "User authenticated successfully"
           sign_in(user)
 
-          # Return success response
+          # Return success response with JWT token
           respond_with(user)
         else
-          render json: { error: 'Invalid email or password' }, status: :unauthorized
+          Rails.logger.info "Authentication failed - user: #{user.inspect}, password_valid: #{user&.valid_password?(user_params[:password])}"
+          render json: {
+            status: {
+              code: 401,
+              message: 'Invalid email or password.'
+            }
+          }, status: :unauthorized
         end
+      end
+
+      def destroy
+        respond_to_on_destroy
       end
 
       private
@@ -30,7 +52,8 @@ module Api
       def respond_with(current_user, _opts = {})
         render json: {
           status: {
-            code: 200, message: 'Logged in successfully.',
+            code: 200,
+            message: 'Logged in successfully.',
             data: { user: UserSerializer.new(current_user).serializable_hash[:data][:attributes] }
           }
         }, status: :ok
@@ -38,8 +61,26 @@ module Api
 
       def respond_to_on_destroy
         if request.headers['Authorization'].present?
-          jwt_payload = JWT.decode(request.headers['Authorization'].split(' ').last, Rails.application.credentials.devise_jwt_secret_key!).first
-          current_user = User.find(jwt_payload['sub'])
+          auth_header = request.headers['Authorization']
+
+          # Check if Authorization header has the correct format
+          unless auth_header.start_with?('Bearer ')
+            return render json: {
+              status: 401,
+              message: "Couldn't find an active session."
+            }, status: :unauthorized
+          end
+
+          begin
+            token = auth_header.split(' ').last
+            jwt_payload = JWT.decode(token, Rails.application.credentials.devise_jwt_secret_key!).first
+
+            # Handle both scoped and unscoped JWT tokens
+            user_id = jwt_payload['sub'] || jwt_payload['user_id']
+            current_user = User.find(user_id) if user_id
+          rescue JWT::DecodeError, JWT::ExpiredSignature, ActiveRecord::RecordNotFound
+            current_user = nil
+          end
         end
 
         if current_user
