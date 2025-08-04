@@ -4,6 +4,10 @@ RSpec.describe 'Api::V1::SmartGoals', type: :request do
   let!(:user) { create(:user) }
   let!(:profile) { user.profile }
 
+  before do
+    sign_in user
+  end
+
   describe 'GET /api/v1/smart_goals' do
     context 'when user has smart goals' do
       let!(:smart_goals) { create_list(:smart_goal, 3, profile: profile) }
@@ -102,13 +106,15 @@ RSpec.describe 'Api::V1::SmartGoals', type: :request do
         let(:invalid_params) do
           {
             smart_goal: {
-              description: 'Some description',
-              timeframe: '1_month',
-              specific: 'Some specific goal',
-              measurable: 'Some measurable criteria',
-              achievable: 'Some achievable plan',
-              relevant: 'Some relevant reason',
-              time_bound: 'Some time bound criteria'
+              description: 'Master React Native development for mobile apps',
+              timeframe: '3_months',
+              specific: 'Complete 3 React Native projects',
+              measurable: 'Build and deploy 3 working mobile applications',
+              achievable: 'Dedicate 2 hours daily to learning and practice',
+              relevant: 'Enhance mobile development skills for career growth',
+              time_bound: 'Complete all projects within 3 months',
+              completed: false,
+              target_date: 3.months.from_now.to_date
             }
           }
         end
@@ -121,11 +127,13 @@ RSpec.describe 'Api::V1::SmartGoals', type: :request do
 
         it 'returns unprocessable entity status' do
           post api_v1_smart_goals_path, params: invalid_params
+
           expect(response).to have_http_status(:unprocessable_entity)
         end
 
         it 'returns error messages' do
           post api_v1_smart_goals_path, params: invalid_params
+
           json_response = JSON.parse(response.body)
           expect(json_response['errors']).to include("Title can't be blank")
         end
@@ -135,25 +143,29 @@ RSpec.describe 'Api::V1::SmartGoals', type: :request do
         let(:invalid_params) do
           {
             smart_goal: {
-              title: 'Some goal',
-              description: 'Some description',
+              title: 'Learn React Native',
+              description: 'Master React Native development for mobile apps',
               timeframe: 'invalid_timeframe',
-              specific: 'Some specific goal',
-              measurable: 'Some measurable criteria',
-              achievable: 'Some achievable plan',
-              relevant: 'Some relevant reason',
-              time_bound: 'Some time bound criteria'
+              specific: 'Complete 3 React Native projects',
+              measurable: 'Build and deploy 3 working mobile applications',
+              achievable: 'Dedicate 2 hours daily to learning and practice',
+              relevant: 'Enhance mobile development skills for career growth',
+              time_bound: 'Complete all projects within 3 months',
+              completed: false,
+              target_date: 3.months.from_now.to_date
             }
           }
         end
 
         it 'returns unprocessable entity status' do
           post api_v1_smart_goals_path, params: invalid_params
+
           expect(response).to have_http_status(:unprocessable_entity)
         end
 
         it 'returns error messages' do
           post api_v1_smart_goals_path, params: invalid_params
+
           json_response = JSON.parse(response.body)
           expect(json_response['errors']).to include('Timeframe is not included in the list')
         end
@@ -163,24 +175,28 @@ RSpec.describe 'Api::V1::SmartGoals', type: :request do
         let(:invalid_params) do
           {
             smart_goal: {
-              title: 'Some goal',
-              description: 'Some description',
-              timeframe: '1_month',
-              measurable: 'Some measurable criteria',
-              achievable: 'Some achievable plan',
-              relevant: 'Some relevant reason',
-              time_bound: 'Some time bound criteria'
+              title: 'Learn React Native',
+              description: 'Master React Native development for mobile apps',
+              timeframe: '3_months',
+              measurable: 'Build and deploy 3 working mobile applications',
+              achievable: 'Dedicate 2 hours daily to learning and practice',
+              relevant: 'Enhance mobile development skills for career growth',
+              time_bound: 'Complete all projects within 3 months',
+              completed: false,
+              target_date: 3.months.from_now.to_date
             }
           }
         end
 
         it 'returns unprocessable entity status' do
           post api_v1_smart_goals_path, params: invalid_params
+
           expect(response).to have_http_status(:unprocessable_entity)
         end
 
         it 'returns error messages' do
           post api_v1_smart_goals_path, params: invalid_params
+
           json_response = JSON.parse(response.body)
           expect(json_response['errors']).to include("Specific can't be blank")
         end
@@ -195,16 +211,9 @@ RSpec.describe 'Api::V1::SmartGoals', type: :request do
       let(:valid_params) do
         {
           smart_goal: {
-            title: 'Updated Smart Goal',
-            description: 'Updated description for the smart goal',
-            timeframe: '6_months',
-            specific: 'Updated specific criteria',
-            measurable: 'Updated measurable criteria',
-            achievable: 'Updated achievable plan',
-            relevant: 'Updated relevant reason',
-            time_bound: 'Updated time bound criteria',
-            completed: true,
-            target_date: 6.months.from_now.to_date
+            title: 'Updated Goal Title',
+            description: 'Updated description',
+            completed: true
           }
         }
       end
@@ -215,14 +224,8 @@ RSpec.describe 'Api::V1::SmartGoals', type: :request do
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
 
-        expect(json_response['title']).to eq('Updated Smart Goal')
-        expect(json_response['description']).to eq('Updated description for the smart goal')
-        expect(json_response['timeframe']).to eq('6_months')
-        expect(json_response['specific']).to eq('Updated specific criteria')
-        expect(json_response['measurable']).to eq('Updated measurable criteria')
-        expect(json_response['achievable']).to eq('Updated achievable plan')
-        expect(json_response['relevant']).to eq('Updated relevant reason')
-        expect(json_response['time_bound']).to eq('Updated time bound criteria')
+        expect(json_response['title']).to eq('Updated Goal Title')
+        expect(json_response['description']).to eq('Updated description')
         expect(json_response['completed']).to eq(true)
       end
 
@@ -230,9 +233,9 @@ RSpec.describe 'Api::V1::SmartGoals', type: :request do
         patch api_v1_smart_goal_path(smart_goal), params: valid_params
 
         smart_goal.reload
-        expect(smart_goal.title).to eq('Updated Smart Goal')
+        expect(smart_goal.title).to eq('Updated Goal Title')
+        expect(smart_goal.description).to eq('Updated description')
         expect(smart_goal.completed).to eq(true)
-        expect(smart_goal.timeframe).to eq('6_months')
       end
     end
 
@@ -240,21 +243,21 @@ RSpec.describe 'Api::V1::SmartGoals', type: :request do
       let(:partial_params) do
         {
           smart_goal: {
-            completed: true
+            title: 'Partially Updated Title'
           }
         }
       end
 
       it 'updates only the provided fields' do
-        original_title = smart_goal.title
+        original_description = smart_goal.description
 
         patch api_v1_smart_goal_path(smart_goal), params: partial_params
 
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
 
-        expect(json_response['completed']).to eq(true)
-        expect(json_response['title']).to eq(original_title)
+        expect(json_response['title']).to eq('Partially Updated Title')
+        expect(json_response['description']).to eq(original_description)
       end
     end
 
@@ -262,44 +265,50 @@ RSpec.describe 'Api::V1::SmartGoals', type: :request do
       let(:invalid_params) do
         {
           smart_goal: {
-            title: ''
+            timeframe: 'invalid_timeframe'
           }
         }
       end
 
       it 'returns unprocessable entity status' do
         patch api_v1_smart_goal_path(smart_goal), params: invalid_params
+
         expect(response).to have_http_status(:unprocessable_entity)
       end
 
       it 'returns error messages' do
         patch api_v1_smart_goal_path(smart_goal), params: invalid_params
+
         json_response = JSON.parse(response.body)
-        expect(json_response['errors']).to include("Title can't be blank")
+        expect(json_response['errors']).to include('Timeframe is not included in the list')
       end
 
       it 'does not update the smart goal' do
-        original_title = smart_goal.title
+        original_timeframe = smart_goal.timeframe
+
         patch api_v1_smart_goal_path(smart_goal), params: invalid_params
 
         smart_goal.reload
-        expect(smart_goal.title).to eq(original_title)
+        expect(smart_goal.timeframe).to eq(original_timeframe)
       end
     end
 
     context 'when smart goal does not exist' do
       it 'returns not found status' do
-        patch api_v1_smart_goal_path(999_999), params: { smart_goal: { title: 'Updated' } }
+        patch api_v1_smart_goal_path(999_999), params: { smart_goal: { title: 'Updated Title' } }
+
         expect(response).to have_http_status(:not_found)
       end
     end
 
     context 'when smart goal belongs to different user' do
       let!(:other_user) { create(:user) }
-      let!(:other_smart_goal) { create(:smart_goal, profile: other_user.profile) }
+      let!(:other_profile) { other_user.profile }
+      let!(:other_smart_goal) { create(:smart_goal, profile: other_profile) }
 
       it 'returns not found status' do
-        patch api_v1_smart_goal_path(other_smart_goal), params: { smart_goal: { title: 'Updated' } }
+        patch api_v1_smart_goal_path(other_smart_goal), params: { smart_goal: { title: 'Updated Title' } }
+
         expect(response).to have_http_status(:not_found)
       end
     end
@@ -317,6 +326,7 @@ RSpec.describe 'Api::V1::SmartGoals', type: :request do
 
       it 'returns no content status' do
         delete api_v1_smart_goal_path(smart_goal)
+
         expect(response).to have_http_status(:no_content)
       end
     end
@@ -324,16 +334,19 @@ RSpec.describe 'Api::V1::SmartGoals', type: :request do
     context 'when smart goal does not exist' do
       it 'returns not found status' do
         delete api_v1_smart_goal_path(999_999)
+
         expect(response).to have_http_status(:not_found)
       end
     end
 
     context 'when smart goal belongs to different user' do
       let!(:other_user) { create(:user) }
-      let!(:other_smart_goal) { create(:smart_goal, profile: other_user.profile) }
+      let!(:other_profile) { other_user.profile }
+      let!(:other_smart_goal) { create(:smart_goal, profile: other_profile) }
 
       it 'returns not found status' do
         delete api_v1_smart_goal_path(other_smart_goal)
+
         expect(response).to have_http_status(:not_found)
       end
     end

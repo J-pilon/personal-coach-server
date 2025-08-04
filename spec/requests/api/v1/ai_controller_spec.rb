@@ -6,11 +6,11 @@ RSpec.describe Api::V1::AiController, type: :request do
   let(:user) { create(:user) }
   let(:profile) { create(:profile, user: user) }
 
-  let(:headers) { { 'X-User-ID' => user.id.to_s } }
-
   before do
-    allow_any_instance_of(Api::V1::AiController).to receive(:current_user).and_return(user)
-    allow(user).to receive(:profile).and_return(profile)
+    # Ensure user has a profile
+    user.profile || create(:profile, user: user)
+    # Sign in the user using Devise test helpers
+    sign_in user
   end
 
   describe 'POST /api/v1/ai' do
@@ -23,7 +23,7 @@ RSpec.describe Api::V1::AiController, type: :request do
                                                                                request_id: 1
                                                                              })
 
-        post '/api/v1/ai', params: { input: 'Create a goal' }, headers: headers
+        post '/api/v1/ai', params: { input: 'Create a goal' }
 
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
@@ -33,7 +33,7 @@ RSpec.describe Api::V1::AiController, type: :request do
 
     context 'with blank input' do
       it 'returns bad request error' do
-        post '/api/v1/ai', params: { input: '' }, headers: headers
+        post '/api/v1/ai', params: { input: '' }
 
         expect(response).to have_http_status(:bad_request)
         json_response = JSON.parse(response.body)
@@ -71,7 +71,7 @@ RSpec.describe Api::V1::AiController, type: :request do
 
         allow_any_instance_of(Ai::TaskSuggester).to receive(:generate_suggestions).and_return(mock_suggestions)
 
-        post '/api/v1/ai/suggested_tasks', params: { profile_id: profile.id }, headers: headers
+        post '/api/v1/ai/suggested_tasks', params: { profile_id: profile.id }
 
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
@@ -84,7 +84,7 @@ RSpec.describe Api::V1::AiController, type: :request do
 
     context 'with invalid profile_id' do
       it 'returns not found error' do
-        post '/api/v1/ai/suggested_tasks', params: { profile_id: 99_999 }, headers: headers
+        post '/api/v1/ai/suggested_tasks', params: { profile_id: 99_999 }
 
         expect(response).to have_http_status(:not_found)
         json_response = JSON.parse(response.body)
@@ -97,7 +97,7 @@ RSpec.describe Api::V1::AiController, type: :request do
         allow_any_instance_of(Ai::TaskSuggester).to receive(:generate_suggestions).and_raise(StandardError,
                                                                                              'AI service error')
 
-        post '/api/v1/ai/suggested_tasks', params: { profile_id: profile.id }, headers: headers
+        post '/api/v1/ai/suggested_tasks', params: { profile_id: profile.id }
 
         expect(response).to have_http_status(:internal_server_error)
         json_response = JSON.parse(response.body)

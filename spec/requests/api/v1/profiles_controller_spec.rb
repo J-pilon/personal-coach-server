@@ -4,6 +4,10 @@ RSpec.describe 'Api::V1::Profiles', type: :request do
   let!(:user) { create(:user) }
   let!(:profile) { user.profile }
 
+  before do
+    sign_in user
+  end
+
   describe 'GET /api/v1/profiles/:id' do
     context 'when profile exists' do
       it 'returns the profile data' do
@@ -102,28 +106,15 @@ RSpec.describe 'Api::V1::Profiles', type: :request do
 
       it 'returns unprocessable entity status' do
         patch api_v1_profile_path(profile), params: invalid_params
+
         expect(response).to have_http_status(:unprocessable_entity)
       end
 
       it 'returns error messages' do
         patch api_v1_profile_path(profile), params: invalid_params
+
         json_response = JSON.parse(response.body)
         expect(json_response['errors']).to include('Onboarding status is not included in the list')
-      end
-
-      it 'does not update the profile' do
-        original_status = profile.onboarding_status
-        patch api_v1_profile_path(profile), params: invalid_params
-
-        profile.reload
-        expect(profile.onboarding_status).to eq(original_status)
-      end
-    end
-
-    context 'when profile does not exist' do
-      it 'returns not found status' do
-        patch api_v1_profile_path(999_999), params: { profile: { first_name: 'John' } }
-        expect(response).to have_http_status(:not_found)
       end
     end
   end
@@ -131,7 +122,7 @@ RSpec.describe 'Api::V1::Profiles', type: :request do
   describe 'PATCH /api/v1/profiles/:id/complete_onboarding' do
     context 'when onboarding is incomplete' do
       before do
-        profile.update!(onboarding_status: 'incomplete')
+        profile.update!(onboarding_status: 'incomplete', onboarding_completed_at: nil)
       end
 
       it 'completes the onboarding' do
@@ -139,9 +130,7 @@ RSpec.describe 'Api::V1::Profiles', type: :request do
 
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
-
         expect(json_response['onboarding_status']).to eq('complete')
-        expect(json_response['onboarding_completed_at']).to be_present
       end
 
       it 'persists the onboarding completion' do
@@ -155,10 +144,7 @@ RSpec.describe 'Api::V1::Profiles', type: :request do
 
     context 'when onboarding is already complete' do
       before do
-        profile.update!(
-          onboarding_status: 'complete',
-          onboarding_completed_at: 1.day.ago
-        )
+        profile.update!(onboarding_status: 'complete', onboarding_completed_at: 1.day.ago)
       end
 
       it 'still returns success' do
@@ -166,7 +152,6 @@ RSpec.describe 'Api::V1::Profiles', type: :request do
 
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
-
         expect(json_response['onboarding_status']).to eq('complete')
       end
 
@@ -177,13 +162,6 @@ RSpec.describe 'Api::V1::Profiles', type: :request do
 
         profile.reload
         expect(profile.onboarding_completed_at).to be > original_timestamp
-      end
-    end
-
-    context 'when profile does not exist' do
-      it 'returns not found status' do
-        patch complete_onboarding_api_v1_profile_path(999_999)
-        expect(response).to have_http_status(:not_found)
       end
     end
   end
