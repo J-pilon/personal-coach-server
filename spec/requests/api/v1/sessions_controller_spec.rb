@@ -57,7 +57,7 @@ RSpec.describe 'Api::V1::Sessions', type: :request do
 
         post '/api/v1/login', params: valid_params
 
-        json_response = JSON.parse(response.body)
+        json_response = response.parsed_body
 
         expect(json_response['status']['code']).to eq(200)
         expect(json_response['status']['message']).to eq('Logged in successfully.')
@@ -91,7 +91,7 @@ RSpec.describe 'Api::V1::Sessions', type: :request do
 
         post '/api/v1/login', params: valid_params
 
-        json_response = JSON.parse(response.body)
+        json_response = response.parsed_body
         expect(json_response['status']['data']['password']).to be_nil
         expect(json_response['status']['data']['password_digest']).to be_nil
       end
@@ -116,7 +116,7 @@ RSpec.describe 'Api::V1::Sessions', type: :request do
         it 'returns error message' do
           post '/api/v1/login', params: invalid_params
 
-          json_response = JSON.parse(response.body)
+          json_response = response.parsed_body
           expect(json_response['status']['code']).to eq(401)
           expect(json_response['status']['message']).to eq('Invalid email or password.')
         end
@@ -140,7 +140,7 @@ RSpec.describe 'Api::V1::Sessions', type: :request do
         it 'returns error message' do
           post '/api/v1/login', params: invalid_params
 
-          json_response = JSON.parse(response.body)
+          json_response = response.parsed_body
           expect(json_response['status']['code']).to eq(401)
           expect(json_response['status']['message']).to eq('Invalid email or password.')
         end
@@ -203,7 +203,7 @@ RSpec.describe 'Api::V1::Sessions', type: :request do
       it 'returns success message' do
         delete '/api/v1/logout', headers: { 'Authorization' => "Bearer #{token}" }
 
-        json_response = JSON.parse(response.body)
+        json_response = response.parsed_body
         expect(json_response['status']).to eq(200)
         expect(json_response['message']).to eq('Logged out successfully.')
       end
@@ -219,8 +219,6 @@ RSpec.describe 'Api::V1::Sessions', type: :request do
 
     context 'with invalid JWT token' do
       it 'returns unauthorized status' do
-        puts "About to make request with invalid token"
-        # Use a different approach that doesn't trigger JWT decode in the test
         delete '/api/v1/logout', headers: { 'Authorization' => 'Bearer ' }
         puts "Response status: #{response.status}"
         puts "Response body: #{response.body}"
@@ -231,7 +229,7 @@ RSpec.describe 'Api::V1::Sessions', type: :request do
         # Use a different approach that doesn't trigger JWT decode in the test
         delete '/api/v1/logout', headers: { 'Authorization' => 'Bearer ' }
 
-        json_response = JSON.parse(response.body)
+        json_response = response.parsed_body
         expect(json_response['status']).to eq(401)
         expect(json_response['message']).to eq("Couldn't find an active session.")
       end
@@ -246,7 +244,7 @@ RSpec.describe 'Api::V1::Sessions', type: :request do
       it 'returns error message' do
         delete '/api/v1/logout'
 
-        json_response = JSON.parse(response.body)
+        json_response = response.parsed_body
         expect(json_response['status']).to eq(401)
         expect(json_response['message']).to eq("Couldn't find an active session.")
       end

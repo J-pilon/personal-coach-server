@@ -6,31 +6,19 @@ module Api
       before_action :authenticate_api_v1_user!
 
       def show
-        user = current_api_v1_user
-        if user
-          profile = user.profile
-          if profile.id.to_s == params[:id]
-            render json: profile
-          else
-            render json: { errors: 'Profile could not be found.' }, status: :not_found
-          end
+        if current_api_v1_profile.id.to_s == params[:id]
+          render json: current_api_v1_profile
         else
           render json: { errors: 'Profile could not be found.' }, status: :not_found
         end
       end
 
       def update
-        user = current_api_v1_user
-        if user
-          profile = user.profile
-          if profile.id.to_s == params[:id]
-            if profile.update(profile_params)
-              render json: profile
-            else
-              render json: { errors: profile.errors.full_messages }, status: :unprocessable_entity
-            end
+        if current_api_v1_profile.id.to_s == params[:id]
+          if current_api_v1_profile.update(profile_params)
+            render json: current_api_v1_profile
           else
-            render json: { errors: 'Profile could not be found.' }, status: :not_found
+            render json: { errors: current_api_v1_profile.errors.full_messages }, status: :unprocessable_entity
           end
         else
           render json: { errors: 'Profile could not be found.' }, status: :not_found
@@ -38,15 +26,9 @@ module Api
       end
 
       def complete_onboarding
-        user = current_api_v1_user
-        if user
-          profile = user.profile
-          if profile.id.to_s == params[:id]
-            profile.complete_onboarding!
-            render json: profile
-          else
-            render json: { errors: 'Profile could not be found.' }, status: :not_found
-          end
+        if current_api_v1_profile.id.to_s == params[:id]
+          current_api_v1_profile.complete_onboarding!
+          render json: current_api_v1_profile
         else
           render json: { errors: 'Profile could not be found.' }, status: :not_found
         end

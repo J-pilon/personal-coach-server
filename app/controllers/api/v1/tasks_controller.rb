@@ -8,8 +8,7 @@ module Api
       before_action :set_task, only: %i[show update destroy]
 
       def index
-        user = current_api_v1_user
-        @tasks = user.profile.tasks
+        @tasks = current_api_v1_profile.tasks
         render json: @tasks
       end
 
@@ -18,8 +17,7 @@ module Api
       end
 
       def create
-        user = current_api_v1_user
-        @task = user.profile.tasks.build(task_params)
+        @task = current_api_v1_profile.tasks.build(task_params)
         if @task.save
           render json: @task, status: :created
         else
@@ -27,6 +25,7 @@ module Api
         end
       rescue ArgumentError => e
         raise e unless e.message.include?('action_category')
+
         render json: { errors: ['Action category is not included in the list'] }, status: :unprocessable_entity
       end
 
@@ -38,6 +37,7 @@ module Api
         end
       rescue ArgumentError => e
         raise e unless e.message.include?('action_category')
+
         render json: { errors: ['Action category is not included in the list'] }, status: :unprocessable_entity
       end
 
@@ -49,8 +49,7 @@ module Api
       private
 
       def set_task
-        user = current_api_v1_user
-        @task = user.profile.tasks.find(params[:id])
+        @task = current_api_v1_profile.tasks.find(params[:id])
       end
 
       def task_params

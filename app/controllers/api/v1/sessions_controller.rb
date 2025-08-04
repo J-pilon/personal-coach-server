@@ -4,8 +4,11 @@ module Api
   module V1
     class SessionsController < Devise::SessionsController
       include ::RackSessionFixController
+
       respond_to :json
 
+      # rubocop:disable Metrics/AbcSize
+      # rubocop:disable Metrics/MethodLength
       def create
         Rails.logger.info "SessionsController#create called with params: #{params.inspect}"
 
@@ -13,7 +16,7 @@ module Api
         Rails.logger.info "User params: #{user_params.inspect}"
 
         unless user_params
-          Rails.logger.info "No user params found, returning unauthorized"
+          Rails.logger.info 'No user params found, returning unauthorized'
           return render json: {
             status: {
               code: 401,
@@ -26,8 +29,8 @@ module Api
         user = User.find_by(email: user_params[:email])
         Rails.logger.info "Found user: #{user.inspect}"
 
-        if user && user.valid_password?(user_params[:password])
-          Rails.logger.info "User authenticated successfully"
+        if user&.valid_password?(user_params[:password])
+          Rails.logger.info 'User authenticated successfully'
           sign_in(user)
 
           # Return success response with JWT token
@@ -72,7 +75,7 @@ module Api
           end
 
           begin
-            token = auth_header.split(' ').last
+            token = auth_header.split.last
             jwt_payload = JWT.decode(token, Rails.application.credentials.devise_jwt_secret_key!).first
 
             # Handle both scoped and unscoped JWT tokens
@@ -99,7 +102,7 @@ module Api
       def sign_in_params
         # Handle both formats: direct user params or nested under session
         user_params = params[:user] || params.dig(:session, :user)
-        user_params.permit(:email, :password) if user_params
+        user_params&.permit(:email, :password)
       end
     end
   end

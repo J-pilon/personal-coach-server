@@ -23,7 +23,6 @@ Rails.application.routes.draw do
       get 'me', to: 'users#me'
 
       resources :tasks
-      resources :users, only: %i[show create]
       resources :profiles, only: %i[show update] do
         member do
           patch :complete_onboarding

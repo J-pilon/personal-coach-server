@@ -2,7 +2,6 @@ require_relative '../../concerns/rack_sessions_fix'
 
 module Api
   module V1
-    # API controller for user registration using Devise
     class RegistrationsController < Devise::RegistrationsController
       include ::RackSessionFixController
 
