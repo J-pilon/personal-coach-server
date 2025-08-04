@@ -4,6 +4,7 @@ module Api
   module V1
     # Controller for managing user tasks
     class TasksController < ApplicationController
+      before_action :authenticate_api_v1_user!
       before_action :set_task, only: %i[show update destroy]
 
       def index
@@ -22,20 +23,22 @@ module Api
         if @task.save
           render json: @task, status: :created
         else
-          render json: @task.errors, status: :unprocessable_entity
+          render json: { errors: @task.errors.full_messages }, status: :unprocessable_entity
         end
-      rescue ArgumentError
-        render json: { errors: ['Invalid action_category value'] }, status: :unprocessable_entity
+      rescue ArgumentError => e
+        raise e unless e.message.include?('action_category')
+        render json: { errors: ['Action category is not included in the list'] }, status: :unprocessable_entity
       end
 
       def update
         if @task.update(task_params)
           render json: @task
         else
-          render json: @task.errors, status: :unprocessable_entity
+          render json: { errors: @task.errors.full_messages }, status: :unprocessable_entity
         end
-      rescue ArgumentError
-        render json: { errors: ['Invalid action_category value'] }, status: :unprocessable_entity
+      rescue ArgumentError => e
+        raise e unless e.message.include?('action_category')
+        render json: { errors: ['Action category is not included in the list'] }, status: :unprocessable_entity
       end
 
       def destroy
