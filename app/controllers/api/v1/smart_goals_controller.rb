@@ -4,6 +4,8 @@ module Api
   module V1
     # Controller for managing user smart goals
     class SmartGoalsController < ApplicationController
+      before_action :authenticate_api_v1_user!
+
       def index
         user = current_api_v1_user
         smart_goals = user.profile.smart_goals

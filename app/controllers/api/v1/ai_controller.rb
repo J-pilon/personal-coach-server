@@ -3,7 +3,7 @@
 module Api
   module V1
     class AiController < ApplicationController
-      before_action :authenticate_user!
+      before_action :authenticate_api_v1_user!
 
       def create
         input = params[:input]
@@ -13,7 +13,7 @@ module Api
           return
         end
 
-        result = Ai::AiService.new(current_user.profile).process(input)
+        result = Ai::AiService.new(current_api_v1_user.profile).process(input)
 
         if result[:intent] == :error
           render json: { error: result[:response][:error] }, status: :internal_server_error
@@ -31,7 +31,7 @@ module Api
       end
 
       def suggested_tasks
-        profile_id = params[:profile_id] || current_user.profile.id
+        profile_id = params[:profile_id] || current_api_v1_user.profile.id
         profile = Profile.find(profile_id)
 
         suggestions = Ai::TaskSuggester.new(profile).generate_suggestions

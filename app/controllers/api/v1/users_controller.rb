@@ -4,7 +4,7 @@ module Api
   module V1
     # Controller for user authentication operations
     class UsersController < ApplicationController
-      # before_action :authenticate_api_v1_user!, only: [:me]
+      before_action :authenticate_api_v1_user!, only: [:me]
 
       def show
         user = User.find_by(id: params[:id])
