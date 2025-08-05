@@ -36,7 +36,8 @@ module Api
           # Return success response with JWT token
           respond_with(user)
         else
-          Rails.logger.info "Authentication failed - user: #{user.inspect}, password_valid: #{user&.valid_password?(user_params[:password])}"
+          Rails.logger.info "Authentication failed - user: #{user.inspect}, " \
+                           "password_valid: #{user&.valid_password?(user_params[:password])}"
           render json: {
             status: {
               code: 401,
@@ -57,7 +58,10 @@ module Api
           status: {
             code: 200,
             message: 'Logged in successfully.',
-            data: { user: UserSerializer.new(current_user).serializable_hash[:data][:attributes] }
+            data: {
+              user: UserSerializer.new(current_user).serializable_hash[:data][:attributes],
+              profile: current_user.profile.as_json(only: [:id, :first_name, :last_name, :work_role, :education, :desires, :limiting_beliefs, :onboarding_status, :onboarding_completed_at, :user_id, :created_at, :updated_at])
+            }
           }
         }, status: :ok
       end

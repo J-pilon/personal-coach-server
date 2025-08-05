@@ -13,7 +13,10 @@ module Api
         if resource.persisted?
           render json: {
             status: { code: 200, message: 'Signed up successfully.' },
-            data: UserSerializer.new(current_user).serializable_hash[:data][:attributes]
+            data: {
+              user: UserSerializer.new(current_user).serializable_hash[:data][:attributes],
+              profile: current_user.profile.as_json(only: [:id, :first_name, :last_name, :work_role, :education, :desires, :limiting_beliefs, :onboarding_status, :onboarding_completed_at, :user_id, :created_at, :updated_at])
+            }
           }
         else
           render json: {
