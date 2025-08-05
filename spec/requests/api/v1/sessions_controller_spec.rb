@@ -61,12 +61,12 @@ RSpec.describe 'Api::V1::Sessions', type: :request do
 
         expect(json_response['status']['code']).to eq(200)
         expect(json_response['status']['message']).to eq('Logged in successfully.')
-        expect(json_response['status']['data']['user']['id']).to eq(user.id)
-        expect(json_response['status']['data']['user']['email']).to eq('test@example.com')
-        expect(json_response['status']['data']['user']['created_at']).to be_present
-        expect(json_response['status']['data']['user']['updated_at']).to be_present
-        expect(json_response['status']['data']['profile']['id']).to be_present
-        expect(json_response['status']['data']['profile']['user_id']).to eq(user.id)
+        expect(json_response['data']['user']['id']).to eq(user.id)
+        expect(json_response['data']['user']['email']).to eq('test@example.com')
+        expect(json_response['data']['user']['created_at']).to be_present
+        expect(json_response['data']['user']['updated_at']).to be_present
+        expect(json_response['data']['profile']['id']).to be_present
+        expect(json_response['data']['profile']['user_id']).to eq(user.id)
       end
 
       it 'returns JWT token in Authorization header' do
@@ -94,8 +94,8 @@ RSpec.describe 'Api::V1::Sessions', type: :request do
         post '/api/v1/login', params: valid_params
 
         json_response = response.parsed_body
-        expect(json_response['status']['data']['user']['password']).to be_nil
-        expect(json_response['status']['data']['user']['password_digest']).to be_nil
+        expect(json_response['data']['user']['password']).to be_nil
+        expect(json_response['data']['user']['password_digest']).to be_nil
       end
     end
 
