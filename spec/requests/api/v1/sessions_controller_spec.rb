@@ -47,7 +47,7 @@ RSpec.describe 'Api::V1::Sessions', type: :request do
         expect(response).to have_http_status(:ok)
       end
 
-      it 'returns user data in correct format' do
+      it 'returns user and profile data in correct format' do
         # Ensure user is created before test
         user = User.create!(
           email: 'test@example.com',
@@ -65,6 +65,8 @@ RSpec.describe 'Api::V1::Sessions', type: :request do
         expect(json_response['status']['data']['user']['email']).to eq('test@example.com')
         expect(json_response['status']['data']['user']['created_at']).to be_present
         expect(json_response['status']['data']['user']['updated_at']).to be_present
+        expect(json_response['status']['data']['profile']['id']).to be_present
+        expect(json_response['status']['data']['profile']['user_id']).to eq(user.id)
       end
 
       it 'returns JWT token in Authorization header' do
@@ -92,8 +94,8 @@ RSpec.describe 'Api::V1::Sessions', type: :request do
         post '/api/v1/login', params: valid_params
 
         json_response = response.parsed_body
-        expect(json_response['status']['data']['password']).to be_nil
-        expect(json_response['status']['data']['password_digest']).to be_nil
+        expect(json_response['status']['data']['user']['password']).to be_nil
+        expect(json_response['status']['data']['user']['password_digest']).to be_nil
       end
     end
 

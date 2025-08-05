@@ -30,17 +30,20 @@ RSpec.describe 'Api::V1::Registrations', type: :request do
         expect(response).to have_http_status(:ok)
       end
 
-      it 'returns user data in correct format' do
+      it 'returns user and profile data in correct format' do
         post '/api/v1/signup', params: valid_params
 
         json_response = JSON.parse(response.body)
 
         expect(json_response['status']['code']).to eq(200)
         expect(json_response['status']['message']).to eq('Signed up successfully.')
-        expect(json_response['data']['email']).to eq('newuser@example.com')
-        expect(json_response['data']['id']).to be_present
-        expect(json_response['data']['created_at']).to be_present
-        expect(json_response['data']['updated_at']).to be_present
+        expect(json_response['data']['user']['email']).to eq('newuser@example.com')
+        expect(json_response['data']['user']['id']).to be_present
+        expect(json_response['data']['user']['created_at']).to be_present
+        expect(json_response['data']['user']['updated_at']).to be_present
+        expect(json_response['data']['profile']['id']).to be_present
+        expect(json_response['data']['profile']['user_id']).to be_present
+        expect(json_response['data']['profile']['onboarding_status']).to eq('incomplete')
       end
 
       it 'returns JWT token in Authorization header' do
@@ -53,9 +56,9 @@ RSpec.describe 'Api::V1::Registrations', type: :request do
       it 'does not return password in response' do
         post '/api/v1/signup', params: valid_params
 
-        json_response = JSON.parse(response.body)
-        expect(json_response['data']['password']).to be_nil
-        expect(json_response['data']['password_digest']).to be_nil
+        json_response = response.parsed_body
+        expect(json_response['data']['user']['password']).to be_nil
+        expect(json_response['data']['user']['password_digest']).to be_nil
       end
 
       it 'automatically signs in the user after registration' do
