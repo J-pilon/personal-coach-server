@@ -9,6 +9,7 @@ module Api
 
       private
 
+      # rubocop:disable Metrics/MethodLength
       def respond_with(current_user, _opts = {})
         if resource.persisted?
           render json: {
@@ -17,7 +18,7 @@ module Api
               user: UserSerializer.new(current_user).serializable_hash[:data][:attributes],
               profile: current_user.profile.as_json(only: [:id, :first_name, :last_name, :work_role, :education, :desires, :limiting_beliefs, :onboarding_status, :onboarding_completed_at, :user_id, :created_at, :updated_at])
             }
-          }
+          }, status: :ok
         else
           render json: {
             status: { message: "User couldn't be created successfully. #{resource.errors.full_messages.to_sentence}" }
