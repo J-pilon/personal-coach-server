@@ -41,7 +41,10 @@ RSpec.describe Ai::IntentRouter do
     context 'when input is unclear' do
       it 'raises an exception for unclear input' do
         router = described_class.new('I need help with something')
-        expect { router.route }.to raise_error(RuntimeError, "IntentRouter: 'i need help with something' input does not match accepted choices.")
+        expect do
+          router.route
+        end.to raise_error(RuntimeError,
+                           "IntentRouter: 'i need help with something' input does not match accepted choices.")
       end
 
       it 'raises an exception for empty input' do

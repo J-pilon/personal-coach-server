@@ -158,7 +158,7 @@ RSpec.describe Ai::AiService do
         expect(result[:intent]).to eq(:error)
         expect(result[:response][:error]).to eq('Test error')
         expect(result[:context_used]).to be false
-        expect(result[:request_id]).to be nil
+        expect(result[:request_id]).to be_nil
       end
 
       it 'does not create an AiRequest record when error occurs before creation' do

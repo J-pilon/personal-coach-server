@@ -24,6 +24,10 @@ module Server
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
 
+    # Enable sessions for Devise JWT authentication
+    config.session_store :cookie_store, key: '_personal_coach_session'
+    config.middleware.use ActionDispatch::Cookies
+
     # Only loads a smaller set of middleware suitable for API only apps.
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.

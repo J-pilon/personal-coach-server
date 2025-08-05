@@ -42,8 +42,8 @@ module Ai
 
       goals_text = goals.map do |goal|
         "Goal: #{goal.title}\n" \
-        "Specific: #{goal.specific}\n" \
-        "Timeframe: #{goal.timeframe_display}"
+          "Specific: #{goal.specific}\n" \
+          "Timeframe: #{goal.timeframe_display}"
       end.join("\n\n")
 
       "Current Goals:\n#{goals_text}"
@@ -56,8 +56,8 @@ module Ai
 
       tasks_text = tasks.map do |task|
         "Task: #{task.title}\n" \
-        "Category: #{task.action_category}\n" \
-        "Status: #{task.completed? ? 'Completed' : 'Pending'}"
+          "Category: #{task.action_category}\n" \
+          "Status: #{task.completed? ? 'Completed' : 'Pending'}"
       end.join("\n\n")
 
       "Recent Tasks:\n#{tasks_text}"

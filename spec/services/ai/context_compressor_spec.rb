@@ -10,16 +10,16 @@ RSpec.describe Ai::ContextCompressor do
     context 'when user has goals and tasks' do
       let!(:smart_goal) do
         create(:smart_goal, profile: user.profile,
-               title: 'Exercise Daily',
-               specific: 'Run 5km every morning',
-               timeframe: '3_months')
+                            title: 'Exercise Daily',
+                            specific: 'Run 5km every morning',
+                            timeframe: '3_months')
       end
 
       let!(:task) do
         create(:task, profile: user.profile,
-               title: 'Buy running shoes',
-               action_category: 'do',
-               completed: false)
+                      title: 'Buy running shoes',
+                      action_category: 'do',
+                      completed: false)
       end
 
       it 'includes recent goals and tasks in context' do
@@ -36,7 +36,7 @@ RSpec.describe Ai::ContextCompressor do
         create_list(:smart_goal, 5, profile: user.profile, completed: false)
 
         context = described_class.perform(profile)
-        goal_count = context.scan(/Goal:/).count
+        goal_count = context.scan('Goal:').count
 
         expect(goal_count).to eq(3) # MAX_GOALS
       end
@@ -45,7 +45,7 @@ RSpec.describe Ai::ContextCompressor do
         create_list(:task, 7, profile: user.profile, completed: false)
 
         context = described_class.perform(profile)
-        task_count = context.scan(/Task:/).count
+        task_count = context.scan('Task:').count
 
         expect(task_count).to eq(5) # MAX_TASKS
       end
@@ -54,7 +54,7 @@ RSpec.describe Ai::ContextCompressor do
         create(:smart_goal, profile: user.profile, completed: true)
 
         context = described_class.perform(profile)
-        goal_count = context.scan(/Goal:/).count
+        goal_count = context.scan('Goal:').count
 
         expect(goal_count).to eq(1) # Only the pending goal
       end
@@ -63,7 +63,7 @@ RSpec.describe Ai::ContextCompressor do
         create(:task, profile: user.profile, completed: true)
 
         context = described_class.perform(profile)
-        task_count = context.scan(/Task:/).count
+        task_count = context.scan('Task:').count
 
         expect(task_count).to eq(1) # Only the incomplete task
       end
@@ -80,8 +80,8 @@ RSpec.describe Ai::ContextCompressor do
     context 'when user has only goals' do
       let!(:smart_goal) do
         create(:smart_goal, profile: user.profile,
-               title: 'Learn Spanish',
-               specific: 'Practice 30 minutes daily')
+                            title: 'Learn Spanish',
+                            specific: 'Practice 30 minutes daily')
       end
 
       it 'includes only goals context' do
@@ -96,8 +96,8 @@ RSpec.describe Ai::ContextCompressor do
     context 'when user has only tasks' do
       let!(:task) do
         create(:task, profile: user.profile,
-               title: 'Call mom',
-               action_category: 'do')
+                      title: 'Call mom',
+                      action_category: 'do')
       end
 
       it 'includes only tasks context' do

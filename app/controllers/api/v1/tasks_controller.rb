@@ -4,11 +4,11 @@ module Api
   module V1
     # Controller for managing user tasks
     class TasksController < ApplicationController
+      before_action :authenticate_api_v1_user!
       before_action :set_task, only: %i[show update destroy]
 
       def index
-        user = current_user
-        @tasks = user.profile.tasks
+        @tasks = current_api_v1_profile.tasks
         render json: @tasks
       end
 
@@ -17,25 +17,28 @@ module Api
       end
 
       def create
-        user = current_user
-        @task = user.profile.tasks.build(task_params)
+        @task = current_api_v1_profile.tasks.build(task_params)
         if @task.save
           render json: @task, status: :created
         else
-          render json: @task.errors, status: :unprocessable_entity
+          render json: { errors: @task.errors.full_messages }, status: :unprocessable_entity
         end
       rescue ArgumentError => e
-        render json: { errors: ['Invalid action_category value'] }, status: :unprocessable_entity
+        raise e unless e.message.include?('action_category')
+
+        render json: { errors: ['Action category is not included in the list'] }, status: :unprocessable_entity
       end
 
       def update
         if @task.update(task_params)
           render json: @task
         else
-          render json: @task.errors, status: :unprocessable_entity
+          render json: { errors: @task.errors.full_messages }, status: :unprocessable_entity
         end
       rescue ArgumentError => e
-        render json: { errors: ['Invalid action_category value'] }, status: :unprocessable_entity
+        raise e unless e.message.include?('action_category')
+
+        render json: { errors: ['Action category is not included in the list'] }, status: :unprocessable_entity
       end
 
       def destroy
@@ -46,8 +49,7 @@ module Api
       private
 
       def set_task
-        user = current_user
-        @task = user.profile.tasks.find(params[:id])
+        @task = current_api_v1_profile.tasks.find(params[:id])
       end
 
       def task_params
