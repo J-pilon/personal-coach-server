@@ -88,11 +88,34 @@ module Api
 
       def suggested_tasks
         profile_id = params[:profile_id] || current_api_v1_profile.id
+        user_provided_key = params[:user_provided_key]
         profile = Profile.find(profile_id)
 
+        # Initialize rate limiter
+        rate_limiter = Ai::RateLimiter.new(profile, user_provided_key)
+
+        # Check rate limits if no user key provided
+        if user_provided_key.blank?
+          limit_check = rate_limiter.check_limit
+          unless limit_check[:allowed]
+            render json: {
+              error: limit_check[:message],
+              reason: limit_check[:reason]
+            }, status: :too_many_requests
+            return
+          end
+        end
+
+        # Generate task suggestions
         suggestions = Ai::TaskSuggester.new(profile).generate_suggestions
 
-        render json: suggestions
+        # Record the request for rate limiting
+        rate_limiter.record_request
+
+        render json: {
+          suggestions: suggestions,
+          usage_info: rate_limiter.usage_info
+        }
       rescue ActiveRecord::RecordNotFound
         render json: { error: 'Profile not found' }, status: :not_found
       rescue StandardError => e
