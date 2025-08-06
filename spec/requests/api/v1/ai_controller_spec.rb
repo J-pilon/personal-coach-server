@@ -161,9 +161,9 @@ RSpec.describe 'Api::V1::AiController', type: :request do
     end
   end
 
-  describe 'GET /api/v1/ai/usage' do
+  describe 'POST /api/v1/ai/usage' do
     it 'returns usage information' do
-      get '/api/v1/ai/usage'
+      post '/api/v1/ai/usage'
 
       expect(response).to have_http_status(:ok)
       json_response = response.parsed_body
@@ -187,7 +187,7 @@ RSpec.describe 'Api::V1::AiController', type: :request do
       end
 
       it 'returns correct remaining count' do
-        get '/api/v1/ai/usage'
+        post '/api/v1/ai/usage'
 
         expect(response).to have_http_status(:ok)
         json_response = response.parsed_body
