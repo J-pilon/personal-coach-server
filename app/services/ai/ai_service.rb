@@ -2,9 +2,10 @@
 
 module Ai
   class AiService
-    def initialize(profile)
+    def initialize(profile, user_provided_key = nil)
       @profile = profile
-      @open_ai_client = OpenAiClient.new
+      @user_provided_key = user_provided_key
+      @open_ai_client = OpenAiClient.new(user_provided_key)
     end
 
     def process(input)
