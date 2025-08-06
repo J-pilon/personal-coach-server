@@ -81,7 +81,8 @@ module Api
       end
 
       def usage
-        rate_limiter = Ai::RateLimiter.new(current_api_v1_profile)
+        user_provided_key = params[:user_provided_key]
+        rate_limiter = Ai::RateLimiter.new(current_api_v1_profile, user_provided_key)
         render json: { usage_info: rate_limiter.usage_info }
       end
 

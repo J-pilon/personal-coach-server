@@ -32,7 +32,7 @@ Rails.application.routes.draw do
       resources :tickets, only: %i[create show]
       post :ai, to: 'ai#create'
       post 'ai/proxy', to: 'ai#proxy'
-      get 'ai/usage', to: 'ai#usage'
+      post 'ai/usage', to: 'ai#usage'
       post 'ai/suggested_tasks', to: 'ai#suggested_tasks'
     end
   end
