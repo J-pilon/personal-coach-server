@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_07_29_002208) do
+ActiveRecord::Schema[7.1].define(version: 2025_08_06_012507) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -74,6 +74,20 @@ ActiveRecord::Schema[7.1].define(version: 2025_07_29_002208) do
     t.index ["smart_goal_id"], name: "index_tasks_on_smart_goal_id"
   end
 
+  create_table "tickets", force: :cascade do |t|
+    t.bigint "profile_id", null: false
+    t.string "kind", null: false
+    t.string "title", null: false
+    t.text "description", null: false
+    t.string "source", null: false
+    t.jsonb "metadata", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_at"], name: "index_tickets_on_created_at"
+    t.index ["kind"], name: "index_tickets_on_kind"
+    t.index ["profile_id"], name: "index_tickets_on_profile_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "email", null: false
     t.string "encrypted_password"
@@ -93,4 +107,5 @@ ActiveRecord::Schema[7.1].define(version: 2025_07_29_002208) do
   add_foreign_key "smart_goals", "profiles"
   add_foreign_key "tasks", "profiles"
   add_foreign_key "tasks", "smart_goals"
+  add_foreign_key "tickets", "profiles"
 end

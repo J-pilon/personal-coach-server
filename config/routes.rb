@@ -29,6 +29,7 @@ Rails.application.routes.draw do
         end
       end
       resources :smart_goals
+      resources :tickets, only: %i[create show]
       post :ai, to: 'ai#create'
       post 'ai/suggested_tasks', to: 'ai#suggested_tasks'
     end
