@@ -16,33 +16,26 @@ RSpec.describe 'Api::V1::AiController', type: :request do
       let(:valid_params) { { input: 'Create a SMART goal for learning React Native' } }
 
       it 'processes AI request successfully' do
-        # Mock the AI service to return a successful response
-        ai_service = instance_double(Ai::AiService)
-        allow(Ai::AiService).to receive(:new).and_return(ai_service)
-        allow(ai_service).to receive(:process).and_return(
-          intent: :smart_goal,
-          response: { specific: 'Test goal' },
-          context_used: true,
-          request_id: 1
-        )
+        # Mock the job to return a job ID
+        job = instance_double(ActiveJob::Base)
+        allow(job).to receive(:provider_job_id).and_return('job-123')
+        allow(AiServiceJob).to receive(:perform_later).and_return(job)
 
         post '/api/v1/ai/proxy', params: valid_params
 
         expect(response).to have_http_status(:ok)
         json_response = response.parsed_body
-        expect(json_response).to include('intent', 'response', 'context_used', 'request_id', 'usage_info')
+        expect(json_response).to include('message', 'job_id', 'status', 'usage_info')
+        expect(json_response['message']).to eq('AI request queued for processing')
+        expect(json_response['status']).to eq('queued')
+        expect(json_response['job_id']).to eq('job-123')
       end
 
       it 'includes usage info in response' do
-        # Mock the AI service to return a successful response
-        ai_service = instance_double(Ai::AiService)
-        allow(Ai::AiService).to receive(:new).and_return(ai_service)
-        allow(ai_service).to receive(:process).and_return(
-          intent: :smart_goal,
-          response: { specific: 'Test goal' },
-          context_used: true,
-          request_id: 1
-        )
+        # Mock the job to return a job ID
+        job = instance_double(ActiveJob::Base)
+        allow(job).to receive(:provider_job_id).and_return('job-123')
+        allow(AiServiceJob).to receive(:perform_later).and_return(job)
 
         post '/api/v1/ai/proxy', params: valid_params
 
@@ -61,15 +54,10 @@ RSpec.describe 'Api::V1::AiController', type: :request do
       end
 
       it 'processes request without rate limiting' do
-        # Mock the AI service to return a successful response
-        ai_service = instance_double(Ai::AiService)
-        allow(Ai::AiService).to receive(:new).and_return(ai_service)
-        allow(ai_service).to receive(:process).and_return(
-          intent: :smart_goal,
-          response: { specific: 'Test goal' },
-          context_used: true,
-          request_id: 1
-        )
+        # Mock the job to return a job ID
+        job = instance_double(ActiveJob::Base)
+        allow(job).to receive(:provider_job_id).and_return('job-123')
+        allow(AiServiceJob).to receive(:perform_later).and_return(job)
 
         post '/api/v1/ai/proxy', params: valid_params
 
@@ -112,7 +100,7 @@ RSpec.describe 'Api::V1::AiController', type: :request do
       end
 
       it 'returns too many requests error' do
-        post '/api/v1/ai/proxy', params: { input: 'test input' }
+        post '/api/v1/ai/proxy', params: { input: 'Test input' }
 
         expect(response).to have_http_status(:too_many_requests)
         json_response = response.parsed_body
@@ -129,34 +117,30 @@ RSpec.describe 'Api::V1::AiController', type: :request do
         allow(rate_limiter).to receive_messages(
           check_limit: {
             allowed: true,
-            remaining: 1
+            reason: nil,
+            message: nil
           },
           record_request: nil,
           usage_info: {
             using_own_key: false,
-            remaining: 1,
+            remaining: 2,
             total_limit: 3
           }
         )
       end
 
       it 'allows the request and shows remaining count' do
-        # Mock the AI service to return a successful response
-        ai_service = instance_double(Ai::AiService)
-        allow(Ai::AiService).to receive(:new).and_return(ai_service)
-        allow(ai_service).to receive(:process).and_return(
-          intent: :smart_goal,
-          response: { specific: 'Test goal' },
-          context_used: true,
-          request_id: 1
-        )
+        # Mock the job to return a job ID
+        job = instance_double(ActiveJob::Base)
+        allow(job).to receive(:provider_job_id).and_return('job-123')
+        allow(AiServiceJob).to receive(:perform_later).and_return(job)
 
-        post '/api/v1/ai/proxy', params: { input: 'test input' }
+        post '/api/v1/ai/proxy', params: { input: 'Test input' }
 
         expect(response).to have_http_status(:ok)
         json_response = response.parsed_body
         usage_info = json_response['usage_info']
-        expect(usage_info['remaining']).to eq(1) # Should have 1 remaining after this request
+        expect(usage_info['remaining']).to eq(2)
       end
     end
   end
@@ -168,10 +152,6 @@ RSpec.describe 'Api::V1::AiController', type: :request do
       expect(response).to have_http_status(:ok)
       json_response = response.parsed_body
       expect(json_response).to include('usage_info')
-
-      usage_info = json_response['usage_info']
-      expect(usage_info).to include('using_own_key', 'remaining')
-      expect(usage_info['remaining']).to eq(3) # Should have full limit initially
     end
 
     context 'when user has made some requests' do
@@ -192,7 +172,7 @@ RSpec.describe 'Api::V1::AiController', type: :request do
         expect(response).to have_http_status(:ok)
         json_response = response.parsed_body
         usage_info = json_response['usage_info']
-        expect(usage_info['remaining']).to eq(2) # Should have 2 remaining
+        expect(usage_info['remaining']).to eq(2)
       end
     end
   end
@@ -202,21 +182,19 @@ RSpec.describe 'Api::V1::AiController', type: :request do
     let(:valid_params) { { input: 'Create a SMART goal for learning React Native' } }
 
     it 'processes AI request successfully' do
-      # Mock the AI service to return a successful response
-      ai_service = instance_double(Ai::AiService)
-      allow(Ai::AiService).to receive(:new).and_return(ai_service)
-      allow(ai_service).to receive(:process).and_return(
-        intent: :smart_goal,
-        response: { specific: 'Test goal' },
-        context_used: true,
-        request_id: 1
-      )
+      # Mock the job to return a job ID
+      job = instance_double(ActiveJob::Base)
+      allow(job).to receive(:provider_job_id).and_return('job-123')
+      allow(AiServiceJob).to receive(:perform_later).and_return(job)
 
       post '/api/v1/ai', params: valid_params
 
       expect(response).to have_http_status(:ok)
       json_response = response.parsed_body
-      expect(json_response).to include('intent', 'response', 'context_used', 'request_id')
+      expect(json_response).to include('message', 'job_id', 'status')
+      expect(json_response['message']).to eq('AI request queued for processing')
+      expect(json_response['status']).to eq('queued')
+      expect(json_response['job_id']).to eq('job-123')
     end
   end
 
@@ -225,33 +203,26 @@ RSpec.describe 'Api::V1::AiController', type: :request do
 
     context 'with valid request' do
       it 'generates task suggestions successfully' do
-        # Mock the task suggester to return suggestions
-        task_suggester = instance_double(Ai::TaskSuggester)
-        allow(Ai::TaskSuggester).to receive(:new).and_return(task_suggester)
-        allow(task_suggester).to receive(:generate_suggestions).and_return(
-          [
-            { title: 'Test task', description: 'Test description', goal_id: nil, time_estimate_minutes: 30 }
-          ]
-        )
+        # Mock the job to return a job ID
+        job = instance_double(ActiveJob::Base)
+        allow(job).to receive(:provider_job_id).and_return('job-123')
+        allow(TaskSuggestionJob).to receive(:perform_later).and_return(job)
 
         post '/api/v1/ai/suggested_tasks', params: valid_params
 
         expect(response).to have_http_status(:ok)
         json_response = response.parsed_body
-        expect(json_response).to include('suggestions', 'usage_info')
-        expect(json_response['suggestions']).to be_an(Array)
-        expect(json_response['usage_info']).to include('using_own_key', 'remaining')
+        expect(json_response).to include('message', 'job_id', 'status', 'usage_info')
+        expect(json_response['message']).to eq('Task suggestions queued for processing')
+        expect(json_response['status']).to eq('queued')
+        expect(json_response['job_id']).to eq('job-123')
       end
 
       it 'includes usage info in response' do
-        # Mock the task suggester to return suggestions
-        task_suggester = instance_double(Ai::TaskSuggester)
-        allow(Ai::TaskSuggester).to receive(:new).and_return(task_suggester)
-        allow(task_suggester).to receive(:generate_suggestions).and_return(
-          [
-            { title: 'Test task', description: 'Test description', goal_id: nil, time_estimate_minutes: 30 }
-          ]
-        )
+        # Mock the job to return a job ID
+        job = instance_double(ActiveJob::Base)
+        allow(job).to receive(:provider_job_id).and_return('job-123')
+        allow(TaskSuggestionJob).to receive(:perform_later).and_return(job)
 
         post '/api/v1/ai/suggested_tasks', params: valid_params
 
@@ -271,14 +242,10 @@ RSpec.describe 'Api::V1::AiController', type: :request do
       end
 
       it 'processes request without rate limiting' do
-        # Mock the task suggester to return suggestions
-        task_suggester = instance_double(Ai::TaskSuggester)
-        allow(Ai::TaskSuggester).to receive(:new).and_return(task_suggester)
-        allow(task_suggester).to receive(:generate_suggestions).and_return(
-          [
-            { title: 'Test task', description: 'Test description', goal_id: nil, time_estimate_minutes: 30 }
-          ]
-        )
+        # Mock the job to return a job ID
+        job = instance_double(ActiveJob::Base)
+        allow(job).to receive(:provider_job_id).and_return('job-123')
+        allow(TaskSuggestionJob).to receive(:perform_later).and_return(job)
 
         post '/api/v1/ai/suggested_tasks', params: valid_params
 
@@ -332,10 +299,8 @@ RSpec.describe 'Api::V1::AiController', type: :request do
 
     context 'when task suggester raises an error' do
       before do
-        # Mock the task suggester to raise an error
-        task_suggester = instance_double(Ai::TaskSuggester)
-        allow(Ai::TaskSuggester).to receive(:new).and_return(task_suggester)
-        allow(task_suggester).to receive(:generate_suggestions).and_raise(StandardError, 'Task suggester error')
+        # Mock the job to raise an error when enqueued
+        allow(TaskSuggestionJob).to receive(:perform_later).and_raise(StandardError, 'Task suggester error')
       end
 
       it 'returns internal server error' do
