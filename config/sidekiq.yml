@@ -1,0 +1,25 @@
+:concurrency: <%= ENV.fetch("SIDEKIQ_CONCURRENCY", 5) %>
+:queues:
+  - [default, 1]
+  - [ai_processing, 2]
+  - [mailers, 1]
+
+:max_retries: 1
+:retry_interval: 60
+
+:logfile: log/sidekiq.log
+:pidfile: tmp/pids/sidekiq.pid
+
+development:
+  :concurrency: 2
+  :queues:
+    - [default, 1]
+    - [ai_processing, 2]
+    - [mailers, 1]
+
+production:
+  :concurrency: <%= ENV.fetch("SIDEKIQ_CONCURRENCY", 10) %>
+  :queues:
+    - [ai_processing, 3]
+    - [default, 2]
+    - [mailers, 1] 
