@@ -13,8 +13,7 @@ Rails.application.routes.draw do
         sign_in: 'login',
         sign_out: 'logout',
         registration: 'signup'
-      },
-      controllers: {
+      }, controllers: {
         sessions: 'api/v1/sessions',
         registrations: 'api/v1/registrations'
       }
@@ -34,6 +33,9 @@ Rails.application.routes.draw do
       post 'ai/proxy', to: 'ai#proxy'
       post 'ai/usage', to: 'ai#usage'
       post 'ai/suggested_tasks', to: 'ai#suggested_tasks'
+
+      # Job status endpoint
+      get 'jobs/:id', to: 'job_status#show'
     end
   end
 end
