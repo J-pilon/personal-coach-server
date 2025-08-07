@@ -15,18 +15,14 @@ module Api
           return
         end
 
-        result = Ai::AiService.new(current_api_v1_profile).process(input)
+        # Enqueue the job for background processing
+        job = AiServiceJob.perform_later(current_api_v1_profile.id, input)
 
-        if result[:intent] == :error
-          render json: { error: result[:response][:error] }, status: :internal_server_error
-        else
-          render json: {
-            intent: result[:intent],
-            response: result[:response],
-            context_used: result[:context_used],
-            request_id: result[:request_id]
-          }
-        end
+        render json: {
+          message: 'AI request queued for processing',
+          job_id: job.provider_job_id,
+          status: 'queued'
+        }
       rescue StandardError => e
         Rails.logger.error "AI Controller error: #{e.message}"
         render json: { error: 'An unexpected error occurred' }, status: :internal_server_error
@@ -56,28 +52,18 @@ module Api
           end
         end
 
-        # Process the AI request
-        begin
-          result = Ai::AiService.new(current_api_v1_profile, user_provided_key).process(input)
+        # Enqueue the job for background processing
+        job = AiServiceJob.perform_later(current_api_v1_profile.id, input, user_provided_key)
 
-          # Record the request for rate limiting
-          rate_limiter.record_request
+        # Record the request for rate limiting
+        rate_limiter.record_request
 
-          if result[:intent] == :error
-            render json: { error: result[:response][:error] }, status: :internal_server_error
-          else
-            render json: {
-              intent: result[:intent],
-              response: result[:response],
-              context_used: result[:context_used],
-              request_id: result[:request_id],
-              usage_info: rate_limiter.usage_info
-            }
-          end
-        rescue StandardError => e
-          Rails.logger.error "AI Proxy error: #{e.message}"
-          render json: { error: 'An unexpected error occurred' }, status: :internal_server_error
-        end
+        render json: {
+          message: 'AI request queued for processing',
+          job_id: job.provider_job_id,
+          status: 'queued',
+          usage_info: rate_limiter.usage_info
+        }
       end
 
       def usage
@@ -106,14 +92,16 @@ module Api
           end
         end
 
-        # Generate task suggestions
-        suggestions = Ai::TaskSuggester.new(profile).generate_suggestions
+        # Enqueue the job for background processing
+        job = TaskSuggestionJob.perform_later(profile.id, user_provided_key)
 
         # Record the request for rate limiting
         rate_limiter.record_request
 
         render json: {
-          suggestions: suggestions,
+          message: 'Task suggestions queued for processing',
+          job_id: job.provider_job_id,
+          status: 'queued',
           usage_info: rate_limiter.usage_info
         }
       rescue ActiveRecord::RecordNotFound
