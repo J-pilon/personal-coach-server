@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class AiProcessingJob < ApplicationJob
+  include Sidekiq::Status::Worker
+
   queue_as :ai_processing
 
   retry_on StandardError, wait: :polynomially_longer, attempts: 3
