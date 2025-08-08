@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+# Exit on error
+set -e
+
+# Check if foreman is installed, install if not
+if ! command -v foreman &> /dev/null; then
+  echo "Installing foreman..."
+  gem install foreman
+fi
+
+# Start the Rails server and Sidekiq using foreman
+exec foreman start -f Procfile.dev "$@"
