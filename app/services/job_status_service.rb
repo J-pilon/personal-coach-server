@@ -27,11 +27,22 @@ class JobStatusService
   end
 
   def self.build_status_response(job_id, status_data)
+    # Parse the result if it's a JSON string
+    parsed_result = status_data['result']
+    if parsed_result.is_a?(String)
+      begin
+        parsed_result = JSON.parse(parsed_result)
+      rescue JSON::ParserError => e
+        Rails.logger.warn "Failed to parse job result JSON: #{e.message}"
+        # Keep the original string if parsing fails
+      end
+    end
+
     {
       job_id: job_id,
       status: status_data['status'] || 'unknown',
       progress: status_data['progress'] || 0,
-      result: status_data['result'],
+      result: parsed_result,
       message: status_data['message'],
       updated_at: status_data['updated_at']
     }

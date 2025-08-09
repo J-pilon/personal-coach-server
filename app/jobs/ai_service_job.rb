@@ -14,8 +14,8 @@ class AiServiceJob < AiProcessingJob
   def process_with_status_update(ai_request, profile, input, user_provided_key)
     result = process_ai_request(profile, input, user_provided_key)
 
-    # Store the result in Sidekiq status for polling
-    store(status: 'complete', progress: 100, result: result)
+    # Store the result in Sidekiq status for polling - CONVERT TO JSON
+    store(status: 'complete', progress: 100, result: result.to_json)
 
     update_ai_request_status(ai_request, 'completed')
     result
