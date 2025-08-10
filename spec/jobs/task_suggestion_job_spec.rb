@@ -6,17 +6,6 @@ require 'sidekiq/testing'
 RSpec.describe TaskSuggestionJob, type: :job do
   let(:profile) { create(:profile) }
   let(:user_provided_key) { 'sk-test-key' }
-  let(:ai_request) { create(:ai_request, profile: profile, job_type: 'task_suggestion') }
-  let(:mock_suggestions) do
-    [
-      {
-        title: 'Complete project documentation',
-        description: 'Write comprehensive documentation',
-        goal_id: 'goal-1',
-        time_estimate_minutes: 60
-      }
-    ]
-  end
 
   before do
     Sidekiq::Testing.inline!
@@ -30,12 +19,28 @@ RSpec.describe TaskSuggestionJob, type: :job do
 
   describe '#perform' do
     context 'when processing succeeds' do
+      let(:ai_request) { create(:ai_request, profile: profile, job_type: 'task_suggestion') }
+      let(:mock_suggestions) do
+        [
+          {
+            title: 'Complete project documentation',
+            description: 'Write comprehensive documentation',
+            goal_id: 'goal-1',
+            time_estimate_minutes: 60
+          }
+        ]
+      end
+
       it 'generates task suggestions successfully' do
         mock_suggester = instance_double(Ai::TaskSuggester)
         allow(Ai::TaskSuggester).to receive(:new).with(profile).and_return(mock_suggester)
         allow(mock_suggester).to receive(:generate_suggestions).and_return(mock_suggestions)
 
-        result = described_class.perform_now(profile.id, user_provided_key, ai_request.id)
+        result = described_class.perform_now(
+          profile_id: profile.id,
+          user_provided_key: user_provided_key,
+          request_id: ai_request.id
+        )
 
         expect(result).to eq(mock_suggestions)
         expect(ai_request.reload.status).to eq('completed')
@@ -46,7 +51,9 @@ RSpec.describe TaskSuggestionJob, type: :job do
         allow(Ai::TaskSuggester).to receive(:new).with(profile).and_return(mock_suggester)
         allow(mock_suggester).to receive(:generate_suggestions).and_return(mock_suggestions)
 
-        expect { described_class.perform_now(profile.id) }.to change(AiRequest, :count).by(1)
+        expect do
+          described_class.perform_now(profile_id: profile.id)
+        end.to change(AiRequest, :count).by(1)
 
         new_request = AiRequest.last
         expect(new_request.profile).to eq(profile)
@@ -56,6 +63,8 @@ RSpec.describe TaskSuggestionJob, type: :job do
     end
 
     context 'when processing fails' do
+      let(:ai_request) { create(:ai_request, profile: profile, job_type: 'task_suggestion') }
+
       it 'handles errors gracefully and updates request status' do
         # Mock the service constructor to return a mock that raises an error
         mock_suggester = instance_double(Ai::TaskSuggester)
@@ -64,7 +73,11 @@ RSpec.describe TaskSuggestionJob, type: :job do
 
         # The job will retry due to retry_on StandardError, so we don't expect an immediate error
         # Instead, we expect the error to be logged and the request status to be updated
-        described_class.perform_now(profile.id, user_provided_key, ai_request.id)
+        described_class.perform_now(
+          profile_id: profile.id,
+          user_provided_key: user_provided_key,
+          request_id: ai_request.id
+        )
 
         expect(ai_request.reload.status).to eq('failed')
         expect(ai_request.error_message).to eq('Task suggester error')
@@ -76,7 +89,11 @@ RSpec.describe TaskSuggestionJob, type: :job do
         allow(Ai::TaskSuggester).to receive(:new).and_return(mock_suggester)
         allow(mock_suggester).to receive(:generate_suggestions).and_raise(StandardError, 'Task suggester error')
 
-        described_class.perform_now(profile.id, user_provided_key, ai_request.id)
+        described_class.perform_now(
+          profile_id: profile.id,
+          user_provided_key: user_provided_key,
+          request_id: ai_request.id
+        )
 
         expect(Rails.logger).to have_received(:error).with('AI Processing Job Error: Task suggester error')
         expect(Rails.logger).to have_received(:error).with(
@@ -89,7 +106,9 @@ RSpec.describe TaskSuggestionJob, type: :job do
       it 'retries the job due to retry_on StandardError' do
         # Since the job uses retry_on StandardError, ActiveRecord::RecordNotFound will be retried
         # We expect the job to be retried and eventually fail after 3 attempts
-        expect { described_class.perform_now(999_999, user_provided_key) }.not_to raise_error
+        expect do
+          described_class.perform_now(profile_id: 999_999, user_provided_key: user_provided_key)
+        end.not_to raise_error
       end
     end
   end
