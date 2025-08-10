@@ -2,22 +2,22 @@
 
 module Ai
   class AiService
-    def initialize(profile, user_provided_key = nil)
+    def initialize(profile:, intent:, user_provided_key: nil)
       @profile = profile
       @user_provided_key = user_provided_key
+      @intent = intent
       @open_ai_client = OpenAiClient.new(user_provided_key)
     end
 
     def process(input)
       ai_request = nil
       begin
-        intent = determine_intent(input)
         context = compress_context
-        prompt = build_prompt(intent, input, context)
-        ai_request = create_ai_request(intent, prompt)
-        response = @open_ai_client.chat_completion(prompt)
+        prompt = build_prompt(input, context)
+        ai_request = create_ai_request(prompt)
+        response = open_ai_client.chat_completion(prompt)
 
-        handle_success(intent, response, context, ai_request)
+        handle_success(response, context, ai_request)
       rescue StandardError => e
         handle_error(e, ai_request)
       end
@@ -25,17 +25,13 @@ module Ai
 
     private
 
-    attr_reader :profile
-
-    def determine_intent(input)
-      IntentRouter.perform(input)
-    end
+    attr_reader :profile, :user_provided_key, :intent, :open_ai_client
 
     def compress_context
       ContextCompressor.perform(profile)
     end
 
-    def create_ai_request(intent, prompt)
+    def create_ai_request(prompt)
       AiRequest.create_with_prompt(
         profile_id: profile.id,
         prompt: prompt,
@@ -44,13 +40,13 @@ module Ai
       )
     end
 
-    def handle_success(intent, response, context, ai_request)
+    def handle_success(response, context, ai_request)
       ai_request.update(status: 'completed')
 
-      build_success_response(intent, response, context, ai_request.id)
+      build_success_response(response, context, ai_request.id)
     end
 
-    def build_success_response(intent, response, context, request_id)
+    def build_success_response(response, context, request_id)
       {
         intent: intent,
         response: response,
@@ -83,8 +79,8 @@ module Ai
       }
     end
 
-    def build_prompt(intent, input, context)
-      case intent
+    def build_prompt(input, context)
+      case intent.to_sym
       when :smart_goal
         PromptTemplates::SmartGoalPrompt.new(input, context).build
       when :prioritization
