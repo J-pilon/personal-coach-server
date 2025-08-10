@@ -1,20 +1,29 @@
 # frozen_string_literal: true
 
 class TaskSuggestionJob < AiProcessingJob
-  def perform(profile_id, user_provided_key = nil, request_id = nil)
+  def perform(profile_id, _user_provided_key = nil, request_id = nil)
     profile = Profile.find(profile_id)
     ai_request ||= find_or_create_ai_request(profile, request_id)
 
-    begin
-      result = process_task_suggestions(profile)
-      update_ai_request_status(ai_request, 'completed')
-      result
-    rescue StandardError => e
-      handle_error(e, ai_request, profile_id, request_id)
-    end
+    process_with_status_update(ai_request, profile)
   end
 
   private
+
+  def process_with_status_update(ai_request, profile)
+    result = process_task_suggestions(profile)
+
+    # Store the result in Sidekiq status for polling
+    # Ensure result is properly JSON serialized for client-side parsing
+    store(status: 'complete', progress: 100, result: result.to_json)
+
+    update_ai_request_status(ai_request, 'completed')
+    result
+  rescue StandardError => e
+    # Store failure status
+    store(status: 'failed', progress: 0)
+    handle_error(e, ai_request, profile.id, ai_request&.id)
+  end
 
   def find_or_create_ai_request(profile, request_id)
     return AiRequest.find(request_id) if request_id

@@ -8,7 +8,12 @@ module Api
       before_action :set_task, only: %i[show update destroy]
 
       def index
-        @tasks = current_api_v1_profile.tasks
+        @tasks = if params[:completed].present?
+                   current_api_v1_profile.tasks.where(completed: params[:completed])
+                 else
+                   current_api_v1_profile.tasks
+                 end
+
         render json: @tasks
       end
 
