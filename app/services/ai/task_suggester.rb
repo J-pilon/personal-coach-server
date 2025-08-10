@@ -14,7 +14,7 @@ module Ai
       ai_request = create_ai_request(prompt)
 
       begin
-        response = @open_ai_client.chat_completion(
+        response = open_ai_client.chat_completion(
           prompt,
           temperature: 0.6,
           model: 'gpt-4o'
@@ -30,7 +30,7 @@ module Ai
 
     private
 
-    attr_reader :profile
+    attr_reader :profile, :open_ai_client
 
     def build_context
       {

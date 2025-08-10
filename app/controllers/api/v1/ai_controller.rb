@@ -16,7 +16,11 @@ module Api
         end
 
         # Enqueue the job for background processing
-        job = AiServiceJob.perform_later(current_api_v1_profile.id, input)
+        job = AiServiceJob.perform_later(
+          profile_id: current_api_v1_profile.id,
+          input: input,
+          intent: 'smart_goal'
+        )
 
         render json: {
           message: 'AI request queued for processing',
@@ -30,6 +34,7 @@ module Api
 
       def proxy
         input = params[:input]
+        intent = params[:intent]
         user_provided_key = params[:user_provided_key]
 
         if input.blank?
@@ -53,7 +58,12 @@ module Api
         end
 
         # Enqueue the job for background processing
-        job = AiServiceJob.perform_later(current_api_v1_profile.id, input, user_provided_key)
+        job = AiServiceJob.perform_later(
+          profile_id: current_api_v1_profile.id,
+          input: input,
+          user_provided_key: user_provided_key,
+          intent: intent
+        )
 
         # Record the request for rate limiting
         rate_limiter.record_request
@@ -93,7 +103,10 @@ module Api
         end
 
         # Enqueue the job for background processing
-        job = TaskSuggestionJob.perform_later(profile.id, user_provided_key)
+        job = TaskSuggestionJob.perform_later(
+          profile_id: profile.id,
+          user_provided_key: user_provided_key
+        )
 
         # Record the request for rate limiting
         rate_limiter.record_request

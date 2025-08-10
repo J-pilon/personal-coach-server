@@ -6,8 +6,8 @@ require 'sidekiq/testing'
 RSpec.describe AiServiceJob, type: :job do
   let(:profile) { create(:profile) }
   let(:input) { 'Create a SMART goal for learning React Native' }
+  let(:intent) { 'smart_goal' }
   let(:user_provided_key) { 'sk-test-key' }
-  let(:ai_request) { create(:ai_request, profile: profile, job_type: 'smart_goal') }
 
   before do
     Sidekiq::Testing.inline!
@@ -21,6 +21,7 @@ RSpec.describe AiServiceJob, type: :job do
 
   describe '#perform' do
     context 'when processing succeeds' do
+      let(:ai_request) { create(:ai_request, profile: profile, job_type: 'smart_goal') }
       let(:mock_result) do
         {
           intent: :smart_goal,
@@ -32,10 +33,18 @@ RSpec.describe AiServiceJob, type: :job do
 
       it 'processes AI request successfully' do
         mock_service = instance_double(Ai::AiService)
-        allow(Ai::AiService).to receive(:new).with(profile, user_provided_key).and_return(mock_service)
+        allow(Ai::AiService).to receive(:new)
+          .with(profile: profile, user_provided_key: user_provided_key, intent: intent)
+          .and_return(mock_service)
         allow(mock_service).to receive(:process).with(input).and_return(mock_result)
 
-        result = described_class.perform_now(profile.id, input, user_provided_key, ai_request.id)
+        result = described_class.perform_now(
+          profile_id: profile.id,
+          input: input,
+          intent: intent,
+          user_provided_key: user_provided_key,
+          request_id: ai_request.id
+        )
 
         expect(result).to eq(mock_result)
         expect(ai_request.reload.status).to eq('completed')
@@ -43,10 +52,18 @@ RSpec.describe AiServiceJob, type: :job do
 
       it 'creates new AI request if not provided' do
         mock_service = instance_double(Ai::AiService)
-        allow(Ai::AiService).to receive(:new).with(profile, nil).and_return(mock_service)
+        allow(Ai::AiService).to receive(:new)
+          .with(profile: profile, user_provided_key: nil, intent: intent)
+          .and_return(mock_service)
         allow(mock_service).to receive(:process).with(input).and_return(mock_result)
 
-        expect { described_class.perform_now(profile.id, input) }.to change(AiRequest, :count).by(1)
+        expect do
+          described_class.perform_now(
+            profile_id: profile.id,
+            input: input,
+            intent: intent
+          )
+        end.to change(AiRequest, :count).by(1)
 
         new_request = AiRequest.last
         expect(new_request.profile).to eq(profile)
@@ -56,9 +73,17 @@ RSpec.describe AiServiceJob, type: :job do
     end
 
     context 'when processing fails' do
+      let(:ai_request) { create(:ai_request, profile: profile, job_type: 'smart_goal') }
+
       it 'handles errors gracefully' do
         # Don't mock anything - let it fail naturally with the test key
-        result = described_class.perform_now(profile.id, input, user_provided_key, ai_request.id)
+        result = described_class.perform_now(
+          profile_id: profile.id,
+          input: input,
+          intent: intent,
+          user_provided_key: user_provided_key,
+          request_id: ai_request.id
+        )
 
         # The AI service handles errors gracefully and returns error responses
         expect(result[:intent]).to eq(:error)
@@ -68,7 +93,13 @@ RSpec.describe AiServiceJob, type: :job do
 
       it 'logs error with context' do
         # Test with a real error scenario
-        result = described_class.perform_now(profile.id, input, user_provided_key, ai_request.id)
+        result = described_class.perform_now(
+          profile_id: profile.id,
+          input: input,
+          intent: intent,
+          user_provided_key: user_provided_key,
+          request_id: ai_request.id
+        )
 
         # The AI service handles errors gracefully and returns error responses
         expect(result[:intent]).to eq(:error)
@@ -82,7 +113,13 @@ RSpec.describe AiServiceJob, type: :job do
       it 'retries the job due to retry_on StandardError' do
         # Since the job uses retry_on StandardError, ActiveRecord::RecordNotFound will be retried
         # We expect the job to be retried and eventually fail after 3 attempts
-        expect { described_class.perform_now(999_999, input) }.not_to raise_error
+        expect do
+          described_class.perform_now(
+            profile_id: 999_999,
+            input: input,
+            intent: intent
+          )
+        end.not_to raise_error
       end
     end
   end

@@ -9,7 +9,6 @@ The AI service layer is composed of several modular components:
 ### Core Services
 
 - **`AiService`** - Main orchestrator that coordinates the entire AI workflow
-- **`IntentRouter`** - Determines whether user input is for SMART goal generation or task prioritization
 - **`ContextCompressor`** - Compresses recent user data into a 1000-token context window
 - **`OpenAiClient`** - Handles OpenAI API calls with retry logic and error handling
 
@@ -23,12 +22,13 @@ The AI service layer is composed of several modular components:
 ### API Endpoint
 
 ```
-POST /api/v1/ai
+POST /api/v1/ai/proxy
 Content-Type: application/json
 X-User-ID: <user_id>
 
 {
-  "input": "Create a goal to exercise more"
+  "input": "Create a goal to exercise more",
+  "intent": "smart_goal"
 }
 ```
 
@@ -65,17 +65,13 @@ X-User-ID: <user_id>
 }
 ```
 
-## Intent Detection
+## Intent Handling
 
-The system automatically detects user intent based on keywords:
+The system now accepts an explicit `intent` parameter to determine the type of processing:
 
-### SMART Goal Keywords
-- goal, objective, target, aim, achieve, accomplish, reach
-- create/make/set/establish/define + goal/objective/target
-
-### Prioritization Keywords
-- prioritize, priority, order, rank, sort, organize, arrange
-- task, todo, item, action, step + list/tasks/todo/items/actions
+### Supported Intents
+- **`smart_goal`** - Generates SMART goals based on user input
+- **`prioritization`** - Prioritizes tasks based on user input
 
 ## Context Compression
 
