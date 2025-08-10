@@ -5,23 +5,21 @@ require 'rails_helper'
 RSpec.describe Ai::AiService do
   let(:user) { create(:user) }
   let(:profile) { user.profile }
-  let(:service) { described_class.new(profile) }
+  let(:mock_open_ai_client) { instance_double(Ai::OpenAiClient) }
+
+  before do
+    allow(Ai::OpenAiClient).to receive(:new).and_return(mock_open_ai_client)
+  end
 
   describe '#process' do
-    let(:mock_open_ai_client) { instance_double(Ai::OpenAiClient) }
-
-    before do
-      allow(Ai::OpenAiClient).to receive(:new).and_return(mock_open_ai_client)
-    end
-
     context 'when processing smart goal intent' do
+      let(:service) { described_class.new(profile: profile, intent: :smart_goal) }
       let(:input) { 'I want to create a goal to exercise more' }
       let(:context) { 'Current Goals: Exercise daily' }
       let(:ai_response) { { 'specific' => 'Exercise for 30 minutes daily' } }
 
       before do
         allow(Ai::ContextCompressor).to receive(:perform).with(profile).and_return(context)
-        allow(Ai::IntentRouter).to receive(:perform).with(input).and_return(:smart_goal)
         allow(mock_open_ai_client).to receive(:chat_completion).and_return(ai_response)
       end
 
@@ -53,7 +51,7 @@ RSpec.describe Ai::AiService do
       end
 
       it 'calls the appropriate prompt template' do
-        expect(mock_open_ai_client).to receive(:chat_completion).with(
+        allow(mock_open_ai_client).to receive(:chat_completion).with(
           include('SMART goal creation')
         ).and_return(ai_response)
 
@@ -62,13 +60,13 @@ RSpec.describe Ai::AiService do
     end
 
     context 'when processing prioritization intent' do
+      let(:service) { described_class.new(profile: profile, intent: :prioritization) }
       let(:input) { 'Prioritize my tasks: exercise, work, sleep' }
       let(:context) { 'Recent Tasks: Exercise daily' }
       let(:ai_response) { [{ 'task' => 'exercise', 'priority' => 1 }] }
 
       before do
         allow(Ai::ContextCompressor).to receive(:perform).with(profile).and_return(context)
-        allow(Ai::IntentRouter).to receive(:perform).with(input).and_return(:prioritization)
         allow(mock_open_ai_client).to receive(:chat_completion).and_return(ai_response)
       end
 
@@ -100,7 +98,7 @@ RSpec.describe Ai::AiService do
       end
 
       it 'calls the appropriate prompt template' do
-        expect(mock_open_ai_client).to receive(:chat_completion).with(
+        allow(mock_open_ai_client).to receive(:chat_completion).with(
           include('task prioritization')
         ).and_return(ai_response)
 
@@ -109,12 +107,12 @@ RSpec.describe Ai::AiService do
     end
 
     context 'when context is empty' do
+      let(:service) { described_class.new(profile: profile, intent: :smart_goal) }
       let(:input) { 'Create a goal' }
       let(:ai_response) { { 'specific' => 'Test goal' } }
 
       before do
         allow(Ai::ContextCompressor).to receive(:perform).with(profile).and_return('')
-        allow(Ai::IntentRouter).to receive(:perform).with(input).and_return(:smart_goal)
         allow(mock_open_ai_client).to receive(:chat_completion).and_return(ai_response)
       end
 
@@ -125,25 +123,8 @@ RSpec.describe Ai::AiService do
       end
     end
 
-    context 'when IntentRouter raises an exception' do
-      let(:input) { 'Unclear input that does not match any intent' }
-
-      before do
-        allow(Ai::IntentRouter).to receive(:perform).with(input).and_raise(
-          StandardError, "IntentRouter: 'unclear input that does not match any intent' input does not match accepted choices."
-        )
-      end
-
-      it 'returns error response' do
-        result = service.process(input)
-
-        expect(result[:intent]).to eq(:error)
-        expect(result[:response][:error]).to include("IntentRouter: 'unclear input that does not match any intent' input does not match accepted choices.")
-        expect(result[:context_used]).to be false
-      end
-    end
-
     context 'when an error occurs' do
+      let(:service) { described_class.new(profile: profile, intent: :smart_goal) }
       let(:input) { 'Create a goal' }
 
       before do
@@ -152,8 +133,6 @@ RSpec.describe Ai::AiService do
 
       it 'returns error response' do
         result = service.process(input)
-
-        puts result.inspect
 
         expect(result[:intent]).to eq(:error)
         expect(result[:response][:error]).to eq('Test error')
@@ -169,11 +148,11 @@ RSpec.describe Ai::AiService do
     end
 
     context 'when OpenAI client raises an error' do
+      let(:service) { described_class.new(profile: profile, intent: :smart_goal) }
       let(:input) { 'Create a goal' }
 
       before do
         allow(Ai::ContextCompressor).to receive(:perform).with(profile).and_return('')
-        allow(Ai::IntentRouter).to receive(:perform).with(input).and_return(:smart_goal)
         allow(mock_open_ai_client).to receive(:chat_completion).and_raise(
           Ai::OpenAiClient::AiServiceError, 'OpenAI API error'
         )

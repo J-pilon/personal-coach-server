@@ -13,7 +13,7 @@ RSpec.describe 'Api::V1::AiController', type: :request do
 
   describe 'POST /api/v1/ai/proxy' do
     context 'with valid input' do
-      let(:valid_params) { { input: 'Create a SMART goal for learning React Native' } }
+      let(:valid_params) { { input: 'Create a SMART goal for learning React Native', intent: 'smart_goal' } }
 
       it 'processes AI request successfully' do
         # Mock the job to return a job ID
@@ -49,6 +49,7 @@ RSpec.describe 'Api::V1::AiController', type: :request do
       let(:valid_params) do
         {
           input: 'Create a SMART goal for learning React Native',
+          intent: 'smart_goal',
           user_provided_key: 'sk-test-user-key'
         }
       end
@@ -70,7 +71,7 @@ RSpec.describe 'Api::V1::AiController', type: :request do
 
     context 'with missing input' do
       it 'returns bad request error' do
-        post '/api/v1/ai/proxy', params: {}
+        post '/api/v1/ai/proxy', params: { intent: 'smart_goal' }
 
         expect(response).to have_http_status(:bad_request)
         json_response = response.parsed_body
@@ -100,7 +101,7 @@ RSpec.describe 'Api::V1::AiController', type: :request do
       end
 
       it 'returns too many requests error' do
-        post '/api/v1/ai/proxy', params: { input: 'Test input' }
+        post '/api/v1/ai/proxy', params: { input: 'Test input', intent: 'smart_goal' }
 
         expect(response).to have_http_status(:too_many_requests)
         json_response = response.parsed_body
@@ -135,7 +136,7 @@ RSpec.describe 'Api::V1::AiController', type: :request do
         allow(job).to receive(:provider_job_id).and_return('job-123')
         allow(AiServiceJob).to receive(:perform_later).and_return(job)
 
-        post '/api/v1/ai/proxy', params: { input: 'Test input' }
+        post '/api/v1/ai/proxy', params: { input: 'Test input', intent: 'smart_goal' }
 
         expect(response).to have_http_status(:ok)
         json_response = response.parsed_body
