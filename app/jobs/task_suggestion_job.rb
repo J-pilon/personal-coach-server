@@ -1,20 +1,22 @@
 # frozen_string_literal: true
 
 class TaskSuggestionJob < AiProcessingJob
-  def perform(profile_id, _user_provided_key = nil, request_id = nil)
-    profile = Profile.find(profile_id)
-    ai_request ||= find_or_create_ai_request(profile, request_id)
+  attr_reader :profile, :ai_request, :request_id, :user_provided_key
 
-    process_with_status_update(ai_request, profile)
+  def perform(profile_id:, user_provided_key: nil, request_id: nil)
+    @profile = Profile.find(profile_id)
+    @user_provided_key = user_provided_key
+    @request_id = request_id
+    @ai_request = find_or_create_ai_request
+
+    process_with_status_update
   end
 
   private
 
-  def process_with_status_update(ai_request, profile)
-    result = process_task_suggestions(profile)
+  def process_with_status_update
+    result = process_task_suggestions
 
-    # Store the result in Sidekiq status for polling
-    # Ensure result is properly JSON serialized for client-side parsing
     store(status: 'complete', progress: 100, result: result.to_json)
 
     update_ai_request_status(ai_request, 'completed')
@@ -22,10 +24,10 @@ class TaskSuggestionJob < AiProcessingJob
   rescue StandardError => e
     # Store failure status
     store(status: 'failed', progress: 0)
-    handle_error(e, ai_request, profile.id, ai_request&.id)
+    handle_error(e)
   end
 
-  def find_or_create_ai_request(profile, request_id)
+  def find_or_create_ai_request
     return AiRequest.find(request_id) if request_id
 
     AiRequest.create_with_prompt(
@@ -36,13 +38,13 @@ class TaskSuggestionJob < AiProcessingJob
     )
   end
 
-  def process_task_suggestions(profile)
+  def process_task_suggestions
     suggester = Ai::TaskSuggester.new(profile)
     suggester.generate_suggestions
   end
 
-  def handle_error(error, ai_request, profile_id, request_id)
-    log_error(error, { profile_id: profile_id, request_id: request_id })
+  def handle_error(error)
+    log_error(error, { profile_id: profile.id, request_id: request_id })
     update_ai_request_status(ai_request, 'failed', error.message) if ai_request
     raise error
   end
