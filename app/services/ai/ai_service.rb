@@ -9,11 +9,11 @@ module Ai
       @open_ai_client = OpenAiClient.new(user_provided_key)
     end
 
-    def process(input)
+    def process(input, timeframe = nil)
       ai_request = nil
       begin
         context = compress_context
-        prompt = build_prompt(input, context)
+        prompt = build_prompt(input, context, timeframe)
         ai_request = create_ai_request(prompt)
         response = open_ai_client.chat_completion(prompt)
 
@@ -79,15 +79,23 @@ module Ai
       }
     end
 
-    def build_prompt(input, context)
+    def build_prompt(input, context, timeframe = nil)
       case intent.to_sym
       when :smart_goal
         PromptTemplates::SmartGoalPrompt.new(input, context).build
+      when :single_smart_goal
+        build_single_smart_goal_prompt(input, context, timeframe)
       when :prioritization
         PromptTemplates::PrioritizationPrompt.new(input, context).build
       else
         raise "Unknown intent: #{intent}"
       end
+    end
+
+    def build_single_smart_goal_prompt(input, context, timeframe = nil)
+      # Input is now a string, timeframe is passed separately
+      timeframe ||= '1 month'
+      PromptTemplates::SingleSmartGoalPrompt.new(input, timeframe, context).build
     end
   end
 end

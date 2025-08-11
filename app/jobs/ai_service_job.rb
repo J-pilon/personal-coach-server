@@ -1,16 +1,19 @@
 # frozen_string_literal: true
 
 class AiServiceJob < AiProcessingJob
-  attr_reader :profile, :input, :intent, :user_provided_key, :request_id, :ai_request
+  attr_reader :profile, :input, :timeframe, :intent, :user_provided_key, :request_id, :ai_request
 
-  def perform(profile_id:, input:, intent:, user_provided_key: nil, request_id: nil)
-    Rails.logger.info "AiServiceJob#perform called with profile_id: #{profile_id}, input: #{input}, job_id: #{@jid}"
+  def perform(profile_id:, input:, intent:, **options)
+    @timeframe = options[:timeframe]
+    @user_provided_key = options[:user_provided_key]
+    @request_id = options[:request_id]
+
+    Rails.logger.info "AiServiceJob#perform called with profile_id: #{profile_id}, input: #{input}, " \
+                      "timeframe: #{@timeframe}, job_id: #{@jid}"
 
     @profile = Profile.find(profile_id)
     @input = input
     @intent = intent
-    @user_provided_key = user_provided_key
-    @request_id = request_id
     @ai_request = find_or_create_ai_request
 
     process_with_status_update
@@ -44,7 +47,7 @@ class AiServiceJob < AiProcessingJob
 
   def process_ai_request
     service = Ai::AiService.new(profile: profile, user_provided_key: user_provided_key, intent: intent)
-    service.process(input)
+    service.process(input, timeframe)
   end
 
   def handle_error(error)

@@ -34,6 +34,7 @@ module Api
 
       def proxy
         input = params[:input]
+        timeframe = params[:timeframe]
         intent = params[:intent]
         user_provided_key = params[:user_provided_key]
 
@@ -61,6 +62,7 @@ module Api
         job = AiServiceJob.perform_later(
           profile_id: current_api_v1_profile.id,
           input: input,
+          timeframe: timeframe,
           user_provided_key: user_provided_key,
           intent: intent
         )
