@@ -6,6 +6,7 @@ RSpec.describe Ai::AiService do
   let(:user) { create(:user) }
   let(:profile) { user.profile }
   let(:mock_open_ai_client) { instance_double(Ai::OpenAiClient) }
+  let(:timeframe) { '1 month' }
 
   before do
     allow(Ai::OpenAiClient).to receive(:new).and_return(mock_open_ai_client)
@@ -24,7 +25,7 @@ RSpec.describe Ai::AiService do
       end
 
       it 'returns structured response with smart_goal intent' do
-        result = service.process(input)
+        result = service.process(input, timeframe)
 
         expect(result[:intent]).to eq(:smart_goal)
         expect(result[:response]).to eq(ai_response)
@@ -33,7 +34,7 @@ RSpec.describe Ai::AiService do
       end
 
       it 'creates an AiRequest record with correct attributes' do
-        expect { service.process(input) }.to change(AiRequest, :count).by(1)
+        expect { service.process(input, timeframe) }.to change(AiRequest, :count).by(1)
 
         ai_request = AiRequest.last
         expect(ai_request.profile_id).to eq(profile.id)
@@ -43,7 +44,7 @@ RSpec.describe Ai::AiService do
       end
 
       it 'updates AiRequest with completed status' do
-        result = service.process(input)
+        result = service.process(input, timeframe)
 
         ai_request = AiRequest.find(result[:request_id])
         expect(ai_request.status).to eq('completed')
@@ -55,7 +56,7 @@ RSpec.describe Ai::AiService do
           include('SMART goal creation')
         ).and_return(ai_response)
 
-        service.process(input)
+        service.process(input, timeframe)
       end
     end
 
@@ -71,7 +72,7 @@ RSpec.describe Ai::AiService do
       end
 
       it 'returns structured response with prioritization intent' do
-        result = service.process(input)
+        result = service.process(input, timeframe)
 
         expect(result[:intent]).to eq(:prioritization)
         expect(result[:response]).to eq(ai_response)
@@ -80,7 +81,7 @@ RSpec.describe Ai::AiService do
       end
 
       it 'creates an AiRequest record with prioritization job type' do
-        expect { service.process(input) }.to change(AiRequest, :count).by(1)
+        expect { service.process(input, timeframe) }.to change(AiRequest, :count).by(1)
 
         ai_request = AiRequest.last
         expect(ai_request.profile_id).to eq(profile.id)
@@ -90,7 +91,7 @@ RSpec.describe Ai::AiService do
       end
 
       it 'updates AiRequest with completed status' do
-        result = service.process(input)
+        result = service.process(input, timeframe)
 
         ai_request = AiRequest.find(result[:request_id])
         expect(ai_request.status).to eq('completed')
@@ -102,7 +103,7 @@ RSpec.describe Ai::AiService do
           include('task prioritization')
         ).and_return(ai_response)
 
-        service.process(input)
+        service.process(input, timeframe)
       end
     end
 
@@ -117,7 +118,7 @@ RSpec.describe Ai::AiService do
       end
 
       it 'indicates no context was used' do
-        result = service.process(input)
+        result = service.process(input, timeframe)
 
         expect(result[:context_used]).to be false
       end
@@ -132,7 +133,7 @@ RSpec.describe Ai::AiService do
       end
 
       it 'returns error response' do
-        result = service.process(input)
+        result = service.process(input, timeframe)
 
         expect(result[:intent]).to eq(:error)
         expect(result[:response][:error]).to eq('Test error')
@@ -141,7 +142,7 @@ RSpec.describe Ai::AiService do
       end
 
       it 'does not create an AiRequest record when error occurs before creation' do
-        expect { service.process(input) }.not_to change(AiRequest, :count)
+        expect { service.process(input, timeframe) }.not_to change(AiRequest, :count)
 
         expect(AiRequest.count).to eq(0)
       end
@@ -159,7 +160,7 @@ RSpec.describe Ai::AiService do
       end
 
       it 'returns error response' do
-        result = service.process(input)
+        result = service.process(input, timeframe)
 
         expect(result[:intent]).to eq(:error)
         expect(result[:response][:error]).to eq('OpenAI API error')
@@ -167,7 +168,7 @@ RSpec.describe Ai::AiService do
       end
 
       it 'creates an AiRequest record and updates it with failure status' do
-        expect { service.process(input) }.to change(AiRequest, :count).by(1)
+        expect { service.process(input, timeframe) }.to change(AiRequest, :count).by(1)
 
         ai_request = AiRequest.last
         expect(ai_request.profile_id).to eq(profile.id)

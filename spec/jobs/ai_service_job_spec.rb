@@ -8,6 +8,7 @@ RSpec.describe AiServiceJob, type: :job do
   let(:input) { 'Create a SMART goal for learning React Native' }
   let(:intent) { 'smart_goal' }
   let(:user_provided_key) { 'sk-test-key' }
+  let(:timeframe) { '1 month' }
 
   before do
     Sidekiq::Testing.inline!
@@ -36,13 +37,14 @@ RSpec.describe AiServiceJob, type: :job do
         allow(Ai::AiService).to receive(:new)
           .with(profile: profile, user_provided_key: user_provided_key, intent: intent)
           .and_return(mock_service)
-        allow(mock_service).to receive(:process).with(input).and_return(mock_result)
+        allow(mock_service).to receive(:process).with(input, timeframe).and_return(mock_result)
 
         result = described_class.perform_now(
           profile_id: profile.id,
           input: input,
           intent: intent,
           user_provided_key: user_provided_key,
+          timeframe: timeframe,
           request_id: ai_request.id
         )
 
@@ -55,13 +57,14 @@ RSpec.describe AiServiceJob, type: :job do
         allow(Ai::AiService).to receive(:new)
           .with(profile: profile, user_provided_key: nil, intent: intent)
           .and_return(mock_service)
-        allow(mock_service).to receive(:process).with(input).and_return(mock_result)
+        allow(mock_service).to receive(:process).with(input, timeframe).and_return(mock_result)
 
         expect do
           described_class.perform_now(
             profile_id: profile.id,
             input: input,
-            intent: intent
+            intent: intent,
+            timeframe: timeframe
           )
         end.to change(AiRequest, :count).by(1)
 
@@ -73,15 +76,16 @@ RSpec.describe AiServiceJob, type: :job do
     end
 
     context 'when processing fails' do
-      let(:ai_request) { create(:ai_request, profile: profile, job_type: 'smart_goal') }
-
       it 'handles errors gracefully' do
+        ai_request = create(:ai_request, profile: profile, job_type: 'smart_goal')
+
         # Don't mock anything - let it fail naturally with the test key
         result = described_class.perform_now(
           profile_id: profile.id,
           input: input,
           intent: intent,
           user_provided_key: user_provided_key,
+          timeframe: timeframe,
           request_id: ai_request.id
         )
 
@@ -92,12 +96,15 @@ RSpec.describe AiServiceJob, type: :job do
       end
 
       it 'logs error with context' do
+        ai_request = create(:ai_request, profile: profile, job_type: 'smart_goal')
+
         # Test with a real error scenario
         result = described_class.perform_now(
           profile_id: profile.id,
           input: input,
           intent: intent,
           user_provided_key: user_provided_key,
+          timeframe: timeframe,
           request_id: ai_request.id
         )
 
@@ -117,7 +124,8 @@ RSpec.describe AiServiceJob, type: :job do
           described_class.perform_now(
             profile_id: 999_999,
             input: input,
-            intent: intent
+            intent: intent,
+            timeframe: timeframe
           )
         end.not_to raise_error
       end
