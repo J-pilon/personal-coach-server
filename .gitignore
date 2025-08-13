@@ -1,0 +1,92 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# Ignore bundler config.
+/.bundle
+
+# Ignore all logfiles and tempfiles.
+/log/*
+/tmp/*
+!/log/.keep
+!/tmp/.keep
+
+# Ignore pidfiles, but keep the directory.
+/tmp/pids/*
+!/tmp/pids/
+!/tmp/pids/.keep
+
+# Ignore uploaded files in development.
+/storage/*
+!/storage/.keep
+/tmp/storage/*
+!/tmp/storage/
+!/tmp/storage/.keep
+
+# Ignore master key for decrypting credentials and more.
+/config/master.key
+/config/credentials/*.key
+
+# Ignore application configuration.
+/config/application.yml
+/config/database.yml
+/config/secrets.yml
+
+# Ignore environment variables.
+.env
+.env.*
+!.env.example
+
+# Ignore asset cache.
+/public/assets
+.byebug_history
+
+# Ignore database files.
+*.sqlite3
+*.sqlite3-*
+*.db
+
+# Ignore coverage reports.
+/coverage/
+
+# Ignore Spring files.
+/spring/*.pid
+
+# Ignore node modules if using webpacker or importmaps.
+/node_modules
+
+# Ignore yarn files if using yarn.
+.yarn-integrity
+
+# Ignore package-lock.json if using npm.
+package-lock.json
+
+# Ignore .DS_Store files on macOS.
+.DS_Store
+
+# Ignore editor files.
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Ignore test files.
+/test/tmp/
+/test/version_tmp/
+
+# Ignore cache files.
+.cache/
+.sass-cache/
+
+# Ignore gems.
+/vendor/bundle/
+
+# Ignore RVM files.
+.rvmrc
+.ruby-version
+.ruby-gemset
+
+# Ignore rbenv files.
+.ruby-version
+
+# Ignore rvm files.
+.rvmrc
