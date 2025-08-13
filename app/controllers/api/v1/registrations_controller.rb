@@ -1,4 +1,4 @@
-require_relative '../../concerns/rack_sessions_fix'
+require_relative '../../concerns/rack_session_fix_controller'
 
 module Api
   module V1
