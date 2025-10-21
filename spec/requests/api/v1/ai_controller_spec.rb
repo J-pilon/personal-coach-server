@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+# rubocop:disable Metrics/BlockLength
 
 require 'rails_helper'
 
@@ -21,7 +22,7 @@ RSpec.describe 'Api::V1::AiController', type: :request do
         allow(job).to receive(:provider_job_id).and_return('job-123')
         allow(AiServiceJob).to receive(:perform_later).and_return(job)
 
-        post '/api/v1/ai/proxy', params: valid_params
+        post api_v1_ai_proxy_path, params: valid_params
 
         expect(response).to have_http_status(:ok)
         json_response = response.parsed_body
@@ -37,7 +38,7 @@ RSpec.describe 'Api::V1::AiController', type: :request do
         allow(job).to receive(:provider_job_id).and_return('job-123')
         allow(AiServiceJob).to receive(:perform_later).and_return(job)
 
-        post '/api/v1/ai/proxy', params: valid_params
+        post api_v1_ai_proxy_path, params: valid_params
 
         json_response = response.parsed_body
         usage_info = json_response['usage_info']
@@ -60,7 +61,7 @@ RSpec.describe 'Api::V1::AiController', type: :request do
         allow(job).to receive(:provider_job_id).and_return('job-123')
         allow(AiServiceJob).to receive(:perform_later).and_return(job)
 
-        post '/api/v1/ai/proxy', params: valid_params
+        post api_v1_ai_proxy_path, params: valid_params
 
         expect(response).to have_http_status(:ok)
         json_response = response.parsed_body
@@ -71,7 +72,7 @@ RSpec.describe 'Api::V1::AiController', type: :request do
 
     context 'with missing input' do
       it 'returns bad request error' do
-        post '/api/v1/ai/proxy', params: { intent: 'smart_goal' }
+        post api_v1_ai_proxy_path, params: { intent: 'smart_goal' }
 
         expect(response).to have_http_status(:bad_request)
         json_response = response.parsed_body
@@ -81,27 +82,19 @@ RSpec.describe 'Api::V1::AiController', type: :request do
 
     context 'when rate limit is exceeded' do
       before do
-        # Mock the rate limiter to simulate exceeded limit
-        rate_limiter = instance_double(Ai::RateLimiter)
-        allow(Ai::RateLimiter).to receive(:new).and_return(rate_limiter)
         limit_message = 'You\'ve hit your 3-request AI limit.'
-        allow(rate_limiter).to receive_messages(
-          check_limit: {
-            allowed: false,
-            reason: 'daily_limit_exceeded',
-            message: limit_message
-          },
-          record_request: nil,
-          usage_info: {
-            using_own_key: false,
-            remaining: 0,
-            total_limit: 3
-          }
+        allow(Ai::RateLimiter).to receive(:check_and_record).and_return(
+          using_own_key: false,
+          remaining: 0,
+          total_limit: 3,
+          reset_time: (Time.current + 24.hours).to_s,
+          error: limit_message,
+          reason: 'daily_limit_exceeded'
         )
       end
 
       it 'returns too many requests error' do
-        post '/api/v1/ai/proxy', params: { input: 'Test input', intent: 'smart_goal' }
+        post api_v1_ai_proxy_path, params: { input: 'Test input', intent: 'smart_goal' }
 
         expect(response).to have_http_status(:too_many_requests)
         json_response = response.parsed_body
@@ -112,31 +105,20 @@ RSpec.describe 'Api::V1::AiController', type: :request do
 
     context 'when user has made some requests' do
       before do
-        # Mock the rate limiter to simulate some requests made
-        rate_limiter = instance_double(Ai::RateLimiter)
-        allow(Ai::RateLimiter).to receive(:new).and_return(rate_limiter)
-        allow(rate_limiter).to receive_messages(
-          check_limit: {
-            allowed: true,
-            reason: nil,
-            message: nil
-          },
-          record_request: nil,
-          usage_info: {
-            using_own_key: false,
-            remaining: 2,
-            total_limit: 3
-          }
+        allow(Ai::RateLimiter).to receive(:check_and_record).and_return(
+          using_own_key: false,
+          remaining: 2,
+          total_limit: 3,
+          reset_time: (Time.current + 24.hours).to_s
         )
       end
 
       it 'allows the request and shows remaining count' do
-        # Mock the job to return a job ID
         job = instance_double(ActiveJob::Base)
         allow(job).to receive(:provider_job_id).and_return('job-123')
         allow(AiServiceJob).to receive(:perform_later).and_return(job)
 
-        post '/api/v1/ai/proxy', params: { input: 'Test input', intent: 'smart_goal' }
+        post api_v1_ai_proxy_path, params: { input: 'Test input', intent: 'smart_goal' }
 
         expect(response).to have_http_status(:ok)
         json_response = response.parsed_body
@@ -148,7 +130,7 @@ RSpec.describe 'Api::V1::AiController', type: :request do
 
   describe 'POST /api/v1/ai/usage' do
     it 'returns usage information' do
-      post '/api/v1/ai/usage'
+      post api_v1_ai_usage_path
 
       expect(response).to have_http_status(:ok)
       json_response = response.parsed_body
@@ -156,19 +138,20 @@ RSpec.describe 'Api::V1::AiController', type: :request do
     end
 
     context 'when user has made some requests' do
+      let(:rate_limiter) { instance_double(Ai::RateLimiter) }
+
       before do
-        # Mock the rate limiter to simulate some requests made
-        rate_limiter = instance_double(Ai::RateLimiter)
         allow(Ai::RateLimiter).to receive(:new).and_return(rate_limiter)
         allow(rate_limiter).to receive(:usage_info).and_return(
           using_own_key: false,
           remaining: 2,
-          total_limit: 3
+          total_limit: 3,
+          reset_time: (Time.current + 24.hours).to_s
         )
       end
 
       it 'returns correct remaining count' do
-        post '/api/v1/ai/usage'
+        post api_v1_ai_usage_path
 
         expect(response).to have_http_status(:ok)
         json_response = response.parsed_body
@@ -209,7 +192,7 @@ RSpec.describe 'Api::V1::AiController', type: :request do
         allow(job).to receive(:provider_job_id).and_return('job-123')
         allow(TaskSuggestionJob).to receive(:perform_later).and_return(job)
 
-        post '/api/v1/ai/suggested_tasks', params: valid_params
+        post api_v1_ai_suggested_tasks_path, params: valid_params
 
         expect(response).to have_http_status(:ok)
         json_response = response.parsed_body
@@ -225,7 +208,7 @@ RSpec.describe 'Api::V1::AiController', type: :request do
         allow(job).to receive(:provider_job_id).and_return('job-123')
         allow(TaskSuggestionJob).to receive(:perform_later).and_return(job)
 
-        post '/api/v1/ai/suggested_tasks', params: valid_params
+        post api_v1_ai_suggested_tasks_path, params: valid_params
 
         json_response = response.parsed_body
         usage_info = json_response['usage_info']
@@ -248,7 +231,7 @@ RSpec.describe 'Api::V1::AiController', type: :request do
         allow(job).to receive(:provider_job_id).and_return('job-123')
         allow(TaskSuggestionJob).to receive(:perform_later).and_return(job)
 
-        post '/api/v1/ai/suggested_tasks', params: valid_params
+        post api_v1_ai_suggested_tasks_path, params: valid_params
 
         expect(response).to have_http_status(:ok)
         json_response = response.parsed_body
@@ -260,26 +243,19 @@ RSpec.describe 'Api::V1::AiController', type: :request do
     context 'when rate limit is exceeded' do
       before do
         # Mock the rate limiter to simulate exceeded limit
-        rate_limiter = instance_double(Ai::RateLimiter)
-        allow(Ai::RateLimiter).to receive(:new).and_return(rate_limiter)
         limit_message = 'You\'ve hit your 3-request AI limit.'
-        allow(rate_limiter).to receive_messages(
-          check_limit: {
-            allowed: false,
-            reason: 'daily_limit_exceeded',
-            message: limit_message
-          },
-          record_request: nil,
-          usage_info: {
-            using_own_key: false,
-            remaining: 0,
-            total_limit: 3
-          }
+        allow(Ai::RateLimiter).to receive(:check_and_record).and_return(
+          using_own_key: false,
+          remaining: 0,
+          total_limit: 3,
+          reset_time: (Time.current + 24.hours).to_s,
+          error: limit_message,
+          reason: 'daily_limit_exceeded'
         )
       end
 
       it 'returns too many requests error' do
-        post '/api/v1/ai/suggested_tasks', params: valid_params
+        post api_v1_ai_suggested_tasks_path, params: valid_params
 
         expect(response).to have_http_status(:too_many_requests)
         json_response = response.parsed_body
@@ -290,7 +266,7 @@ RSpec.describe 'Api::V1::AiController', type: :request do
 
     context 'when profile is not found' do
       it 'returns not found error' do
-        post '/api/v1/ai/suggested_tasks', params: { profile_id: 99_999 }
+        post api_v1_ai_suggested_tasks_path, params: { profile_id: 99_999 }
 
         expect(response).to have_http_status(:not_found)
         json_response = response.parsed_body
@@ -305,7 +281,7 @@ RSpec.describe 'Api::V1::AiController', type: :request do
       end
 
       it 'returns internal server error' do
-        post '/api/v1/ai/suggested_tasks', params: valid_params
+        post api_v1_ai_suggested_tasks_path, params: valid_params
 
         expect(response).to have_http_status(:internal_server_error)
         json_response = response.parsed_body
