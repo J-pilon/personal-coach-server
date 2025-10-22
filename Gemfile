@@ -70,3 +70,7 @@ group :development do
   gem 'rubocop-rails', require: false
   gem 'rubocop-rspec', require: false
 end
+
+gem "erb_lint", "~> 0.9.0", :groups => [:development, :test]
+
+gem "bundle-audit", "~> 0.1.0", :groups => [:development, :test]
