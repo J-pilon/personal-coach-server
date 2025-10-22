@@ -160,7 +160,6 @@ RSpec.describe Ai::OpenAiClient do
 
     context 'when API key is not provided' do
       before do
-        allow(Rails.application.credentials).to receive(:openai_api_key).and_return('default-key')
         allow(OpenAI::Client).to receive(:new).with(access_token: 'default-key').and_return(mock_openai_client)
       end
 
