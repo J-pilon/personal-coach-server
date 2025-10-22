@@ -6,6 +6,11 @@ module Ai
     LIMIT_WINDOW = 24.hours
     DENIAL_WINDOW = 14.days
 
+    def self.check_and_record(profile, user_provided_key = nil)
+      instance = new(profile, user_provided_key)
+      instance.check_and_record
+    end
+
     def initialize(profile, user_provided_key = nil)
       @profile = profile
       @user_provided_key = user_provided_key
@@ -33,6 +38,12 @@ module Ai
       [DAILY_LIMIT - current_requests, 0].max
     end
 
+    def requests_remaining?
+      return true if user_has_own_key?
+
+      (DAILY_LIMIT - current_requests).positive?
+    end
+
     def usage_info
       if user_has_own_key?
         { using_own_key: true, remaining: Float::INFINITY }
@@ -44,6 +55,20 @@ module Ai
           reset_time: next_reset_time
         }
       end
+    end
+
+    def check_and_record
+      limit_check = check_limit
+
+      unless limit_check[:allowed]
+        return usage_info.merge(
+          error: limit_check[:message],
+          reason: limit_check[:reason]
+        )
+      end
+
+      record_request
+      usage_info
     end
 
     private

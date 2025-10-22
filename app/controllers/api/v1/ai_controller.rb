@@ -15,7 +15,6 @@ module Api
           return
         end
 
-        # Enqueue the job for background processing
         job = AiServiceJob.perform_later(
           profile_id: current_api_v1_profile.id,
           input: input,
@@ -43,22 +42,16 @@ module Api
           return
         end
 
-        # Initialize rate limiter
-        rate_limiter = Ai::RateLimiter.new(current_api_v1_profile, user_provided_key)
+        result = Ai::RateLimiter.check_and_record(current_api_v1_profile, user_provided_key)
 
-        # Check rate limits if no user key provided
-        if user_provided_key.blank?
-          limit_check = rate_limiter.check_limit
-          unless limit_check[:allowed]
-            render json: {
-              error: limit_check[:message],
-              reason: limit_check[:reason]
-            }, status: :too_many_requests
-            return
-          end
+        if result[:error].present?
+          render json: {
+            error: result[:error],
+            reason: result[:reason]
+          }, status: :too_many_requests
+          return
         end
 
-        # Enqueue the job for background processing
         job = AiServiceJob.perform_later(
           profile_id: current_api_v1_profile.id,
           input: input,
@@ -67,21 +60,18 @@ module Api
           intent: intent
         )
 
-        # Record the request for rate limiting
-        rate_limiter.record_request
-
         render json: {
           message: 'AI request queued for processing',
           job_id: job.provider_job_id,
           status: 'queued',
-          usage_info: rate_limiter.usage_info
+          usage_info: result
         }
       end
 
       def usage
         user_provided_key = params[:user_provided_key]
-        rate_limiter = Ai::RateLimiter.new(current_api_v1_profile, user_provided_key)
-        render json: { usage_info: rate_limiter.usage_info }
+        result = Ai::RateLimiter.new(current_api_v1_profile, user_provided_key).usage_info
+        render json: { usage_info: result }
       end
 
       def suggested_tasks
@@ -89,35 +79,26 @@ module Api
         user_provided_key = params[:user_provided_key]
         profile = Profile.find(profile_id)
 
-        # Initialize rate limiter
-        rate_limiter = Ai::RateLimiter.new(profile, user_provided_key)
+        result = Ai::RateLimiter.check_and_record(profile, user_provided_key)
 
-        # Check rate limits if no user key provided
-        if user_provided_key.blank?
-          limit_check = rate_limiter.check_limit
-          unless limit_check[:allowed]
-            render json: {
-              error: limit_check[:message],
-              reason: limit_check[:reason]
-            }, status: :too_many_requests
-            return
-          end
+        if result[:error].present?
+          render json: {
+            error: result[:error],
+            reason: result[:reason]
+          }, status: :too_many_requests
+          return
         end
 
-        # Enqueue the job for background processing
         job = TaskSuggestionJob.perform_later(
           profile_id: profile.id,
           user_provided_key: user_provided_key
         )
 
-        # Record the request for rate limiting
-        rate_limiter.record_request
-
         render json: {
           message: 'Task suggestions queued for processing',
           job_id: job.provider_job_id,
           status: 'queued',
-          usage_info: rate_limiter.usage_info
+          usage_info: result
         }
       rescue ActiveRecord::RecordNotFound
         render json: { error: 'Profile not found' }, status: :not_found
