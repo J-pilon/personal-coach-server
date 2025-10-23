@@ -60,17 +60,12 @@ group :development, :test do
 end
 
 group :development do
-  # Speed up commands on slow machines / big apps [https://github.com/rails/spring]
-  # gem 'spring'
-
-  gem 'error_highlight', '>= 0.4.0', platforms: [:ruby]
-
   # Code linting
   gem 'rubocop', require: false
   gem 'rubocop-rails', require: false
   gem 'rubocop-rspec', require: false
+  gem "erb_lint", "~> 0.9.0"
+
+  # Security
+  gem "bundle-audit", "~> 0.1.0"
 end
-
-gem "erb_lint", "~> 0.9.0", :groups => [:development, :test]
-
-gem "bundle-audit", "~> 0.1.0", :groups => [:development, :test]

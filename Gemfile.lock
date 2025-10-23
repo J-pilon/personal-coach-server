@@ -130,7 +130,6 @@ GEM
       rainbow
       rubocop (>= 1)
       smart_properties
-    error_highlight (0.7.0)
     erubi (1.13.1)
     event_stream_parser (1.0.0)
     factory_bot (6.5.5)
@@ -390,7 +389,6 @@ DEPENDENCIES
   devise
   devise-jwt
   erb_lint (~> 0.9.0)
-  error_highlight (>= 0.4.0)
   factory_bot_rails
   faker
   jsonapi-serializer
