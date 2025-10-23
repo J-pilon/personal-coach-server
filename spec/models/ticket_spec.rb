@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 RSpec.describe Ticket, type: :model do
@@ -131,14 +133,17 @@ RSpec.describe Ticket, type: :model do
       ticket = described_class.create_with_diagnostics(ticket_attributes, diagnostics)
 
       expect(ticket).to be_persisted
-      expect(ticket.metadata['app_version']).to eq('1.0.0')
-      expect(ticket.metadata['device_model']).to eq('iPhone 14')
-      expect(ticket.metadata['os_version']).to eq('17.0')
-      expect(ticket.metadata['locale']).to eq('en')
-      expect(ticket.metadata['timezone']).to eq('America/New_York')
-      expect(ticket.metadata['network_state']).to eq('online')
-      expect(ticket.metadata['user_id']).to eq('123')
-      expect(ticket.metadata['timestamp']).to be_present
+
+      aggregate_failures 'diagnostics metadata' do
+        expect(ticket.metadata['app_version']).to eq('1.0.0')
+        expect(ticket.metadata['device_model']).to eq('iPhone 14')
+        expect(ticket.metadata['os_version']).to eq('17.0')
+        expect(ticket.metadata['locale']).to eq('en')
+        expect(ticket.metadata['timezone']).to eq('America/New_York')
+        expect(ticket.metadata['network_state']).to eq('online')
+        expect(ticket.metadata['user_id']).to eq('123')
+        expect(ticket.metadata['timestamp']).to be_present
+      end
     end
   end
 end

@@ -1,9 +1,11 @@
+# frozen_string_literal: true
+
 source 'https://rubygems.org'
 
-ruby '3.1.1'
+ruby '3.3.0'
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails', branch: 'main'
-gem 'rails', '~> 7.1.5', '>= 7.1.5.1'
+gem 'rails', '~> 7.2.2.2'
 
 # Use the Puma web server [https://github.com/puma/puma]
 gem 'puma', '>= 5.0'
@@ -60,13 +62,13 @@ group :development, :test do
 end
 
 group :development do
-  # Speed up commands on slow machines / big apps [https://github.com/rails/spring]
-  # gem 'spring'
-
-  gem 'error_highlight', '>= 0.4.0', platforms: [:ruby]
-
   # Code linting
+  gem 'erb_lint', '~> 0.9.0'
   gem 'rubocop', require: false
   gem 'rubocop-rails', require: false
   gem 'rubocop-rspec', require: false
+
+  # Security
+  gem 'brakeman', '~> 7.1'
+  gem 'bundle-audit', '~> 0.1.0'
 end

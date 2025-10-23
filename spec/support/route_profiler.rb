@@ -110,7 +110,7 @@ module RouteProfiler
       build_metrics_hash(key, arr.first, count, mean, p95, max, total, statuses)
     end
 
-    # rubocop:disable Metrics/ParameterLists, Metrics/MethodLength
+    # rubocop:disable Metrics/ParameterLists
     def build_metrics_hash(key, first_sample, count, mean, p95, max, total, statuses)
       {
         key: key,
@@ -124,7 +124,7 @@ module RouteProfiler
         statuses: statuses
       }
     end
-    # rubocop:enable Metrics/ParameterLists, Metrics/MethodLength
+    # rubocop:enable Metrics/ParameterLists
 
     def calculate_percentile(sorted_values, count)
       index = (count * PERCENTILE_95).floor - 1
@@ -174,11 +174,11 @@ module RouteProfiler
 
     def print_row(metric)
       row = [metric[:key],
-              metric[:count],
-              metric[:mean_ms].round(1),
-              metric[:p95_ms].round(1),
-              metric[:max_ms].round(1),
-              metric[:statuses].inspect]
+             metric[:count],
+             metric[:mean_ms].round(1),
+             metric[:p95_ms].round(1),
+             metric[:max_ms].round(1),
+             metric[:statuses].inspect]
 
       @io.puts format_headers(
         HEADER_FORMAT,
@@ -215,7 +215,6 @@ module RouteProfiler
       end
     end
 
-    # rubocop:disable Metrics/MethodLength
     def build_csv_row(metric)
       [
         metric[:key],
@@ -229,18 +228,13 @@ module RouteProfiler
         metric[:statuses].to_json
       ]
     end
-    # rubocop:enable Metrics/MethodLength
   end
 
   # Module-level API for easy access
   class << self
-    def subscribe!
-      collector.subscribe!
-    end
+    delegate :subscribe!, to: :collector
 
-    def unsubscribe!
-      collector.unsubscribe!
-    end
+    delegate :unsubscribe!, to: :collector
 
     def report!(top: 50, io: $stdout, csv: 'tmp/route_profile_from_specs.csv', formatters: nil)
       metrics = MetricsCalculator.new(collector.samples).calculate

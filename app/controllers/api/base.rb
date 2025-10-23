@@ -1,4 +1,6 @@
+# frozen_string_literal: true
+
 module Api
-  class Base
+  class Base # rubocop:disable Lint/EmptyClass
   end
 end

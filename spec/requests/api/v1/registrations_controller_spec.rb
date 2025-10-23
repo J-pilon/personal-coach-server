@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 RSpec.describe 'Api::V1::Registrations', type: :request do
@@ -33,17 +35,19 @@ RSpec.describe 'Api::V1::Registrations', type: :request do
       it 'returns user and profile data in correct format' do
         post '/api/v1/signup', params: valid_params
 
-        json_response = JSON.parse(response.body)
+        json_response = response.parsed_body
 
-        expect(json_response['status']['code']).to eq(200)
-        expect(json_response['status']['message']).to eq('Signed up successfully.')
-        expect(json_response['data']['user']['email']).to eq('newuser@example.com')
-        expect(json_response['data']['user']['id']).to be_present
-        expect(json_response['data']['user']['created_at']).to be_present
-        expect(json_response['data']['user']['updated_at']).to be_present
-        expect(json_response['data']['profile']['id']).to be_present
-        expect(json_response['data']['profile']['user_id']).to be_present
-        expect(json_response['data']['profile']['onboarding_status']).to eq('incomplete')
+        aggregate_failures 'diagnostics metadata' do
+          expect(json_response['status']['code']).to eq(200)
+          expect(json_response['status']['message']).to eq('Signed up successfully.')
+          expect(json_response['data']['user']['email']).to eq('newuser@example.com')
+          expect(json_response['data']['user']['id']).to be_present
+          expect(json_response['data']['user']['created_at']).to be_present
+          expect(json_response['data']['user']['updated_at']).to be_present
+          expect(json_response['data']['profile']['id']).to be_present
+          expect(json_response['data']['profile']['user_id']).to be_present
+          expect(json_response['data']['profile']['onboarding_status']).to eq('incomplete')
+        end
       end
 
       it 'returns JWT token in Authorization header' do
@@ -96,7 +100,7 @@ RSpec.describe 'Api::V1::Registrations', type: :request do
         it 'returns error message' do
           post '/api/v1/signup', params: invalid_params
 
-          json_response = JSON.parse(response.body)
+          json_response = response.parsed_body
           expect(json_response['status']['message']).to include("Email can't be blank")
         end
       end
@@ -120,7 +124,7 @@ RSpec.describe 'Api::V1::Registrations', type: :request do
         it 'returns error message' do
           post '/api/v1/signup', params: invalid_params
 
-          json_response = JSON.parse(response.body)
+          json_response = response.parsed_body
           expect(json_response['status']['message']).to include('Email is invalid')
         end
       end
@@ -151,7 +155,7 @@ RSpec.describe 'Api::V1::Registrations', type: :request do
         it 'returns error message' do
           post '/api/v1/signup', params: duplicate_params
 
-          json_response = JSON.parse(response.body)
+          json_response = response.parsed_body
           expect(json_response['status']['message']).to include('Email has already been taken')
         end
       end
@@ -174,7 +178,7 @@ RSpec.describe 'Api::V1::Registrations', type: :request do
         it 'returns error message' do
           post '/api/v1/signup', params: invalid_params
 
-          json_response = JSON.parse(response.body)
+          json_response = response.parsed_body
           expect(json_response['status']['message']).to include("Password can't be blank")
         end
       end
@@ -198,7 +202,7 @@ RSpec.describe 'Api::V1::Registrations', type: :request do
         it 'returns error message' do
           post '/api/v1/signup', params: invalid_params
 
-          json_response = JSON.parse(response.body)
+          json_response = response.parsed_body
           expect(json_response['status']['message']).to include('Password is too short')
         end
       end
@@ -222,7 +226,7 @@ RSpec.describe 'Api::V1::Registrations', type: :request do
         it 'returns error message' do
           post '/api/v1/signup', params: invalid_params
 
-          json_response = JSON.parse(response.body)
+          json_response = response.parsed_body
           expect(json_response['status']['message']).to include("Password confirmation doesn't match Password")
         end
       end
@@ -245,7 +249,7 @@ RSpec.describe 'Api::V1::Registrations', type: :request do
         it 'returns error message' do
           post '/api/v1/signup', params: invalid_params
 
-          json_response = JSON.parse(response.body)
+          json_response = response.parsed_body
           expect(json_response['status']['message']).to include("Password confirmation can't be blank")
         end
       end

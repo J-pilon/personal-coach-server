@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 RSpec.describe 'Api::V1::SmartGoals', type: :request do
@@ -16,16 +18,16 @@ RSpec.describe 'Api::V1::SmartGoals', type: :request do
         get api_v1_smart_goals_path
 
         expect(response).to have_http_status(:ok)
-        json_response = JSON.parse(response.body)
+        json_response = response.parsed_body
 
         expect(json_response.length).to eq(3)
-        expect(json_response.map { |goal| goal['id'] }).to match_array(smart_goals.map(&:id))
+        expect(json_response.pluck('id')).to match_array(smart_goals.map(&:id))
       end
 
       it 'returns smart goal data with correct attributes' do
         get api_v1_smart_goals_path
 
-        json_response = JSON.parse(response.body)
+        json_response = response.parsed_body
         goal = json_response.first
 
         expect(goal).to include(
@@ -50,7 +52,7 @@ RSpec.describe 'Api::V1::SmartGoals', type: :request do
         get api_v1_smart_goals_path
 
         expect(response).to have_http_status(:ok)
-        json_response = JSON.parse(response.body)
+        json_response = response.parsed_body
 
         expect(json_response).to eq([])
       end
@@ -86,18 +88,20 @@ RSpec.describe 'Api::V1::SmartGoals', type: :request do
         post api_v1_smart_goals_path, params: valid_params
 
         expect(response).to have_http_status(:created)
-        json_response = JSON.parse(response.body)
+        json_response = response.parsed_body
 
-        expect(json_response['profile_id']).to eq(profile.id)
-        expect(json_response['title']).to eq('Learn React Native')
-        expect(json_response['description']).to eq('Master React Native development for mobile apps')
-        expect(json_response['timeframe']).to eq('3_months')
-        expect(json_response['specific']).to eq('Complete 3 React Native projects')
-        expect(json_response['measurable']).to eq('Build and deploy 3 working mobile applications')
-        expect(json_response['achievable']).to eq('Dedicate 2 hours daily to learning and practice')
-        expect(json_response['relevant']).to eq('Enhance mobile development skills for career growth')
-        expect(json_response['time_bound']).to eq('Complete all projects within 3 months')
-        expect(json_response['completed']).to eq(false)
+        aggregate_failures 'diagnostics metadata' do
+          expect(json_response['profile_id']).to eq(profile.id)
+          expect(json_response['title']).to eq('Learn React Native')
+          expect(json_response['description']).to eq('Master React Native development for mobile apps')
+          expect(json_response['timeframe']).to eq('3_months')
+          expect(json_response['specific']).to eq('Complete 3 React Native projects')
+          expect(json_response['measurable']).to eq('Build and deploy 3 working mobile applications')
+          expect(json_response['achievable']).to eq('Dedicate 2 hours daily to learning and practice')
+          expect(json_response['relevant']).to eq('Enhance mobile development skills for career growth')
+          expect(json_response['time_bound']).to eq('Complete all projects within 3 months')
+          expect(json_response['completed']).to be(false)
+        end
       end
     end
 
@@ -134,7 +138,7 @@ RSpec.describe 'Api::V1::SmartGoals', type: :request do
         it 'returns error messages' do
           post api_v1_smart_goals_path, params: invalid_params
 
-          json_response = JSON.parse(response.body)
+          json_response = response.parsed_body
           expect(json_response['errors']).to include("Title can't be blank")
         end
       end
@@ -166,7 +170,7 @@ RSpec.describe 'Api::V1::SmartGoals', type: :request do
         it 'returns error messages' do
           post api_v1_smart_goals_path, params: invalid_params
 
-          json_response = JSON.parse(response.body)
+          json_response = response.parsed_body
           expect(json_response['errors']).to include('Timeframe is not included in the list')
         end
       end
@@ -197,7 +201,7 @@ RSpec.describe 'Api::V1::SmartGoals', type: :request do
         it 'returns error messages' do
           post api_v1_smart_goals_path, params: invalid_params
 
-          json_response = JSON.parse(response.body)
+          json_response = response.parsed_body
           expect(json_response['errors']).to include("Specific can't be blank")
         end
       end
@@ -222,11 +226,11 @@ RSpec.describe 'Api::V1::SmartGoals', type: :request do
         patch api_v1_smart_goal_path(smart_goal), params: valid_params
 
         expect(response).to have_http_status(:ok)
-        json_response = JSON.parse(response.body)
+        json_response = response.parsed_body
 
         expect(json_response['title']).to eq('Updated Goal Title')
         expect(json_response['description']).to eq('Updated description')
-        expect(json_response['completed']).to eq(true)
+        expect(json_response['completed']).to be(true)
       end
 
       it 'persists the changes to the database' do
@@ -235,7 +239,7 @@ RSpec.describe 'Api::V1::SmartGoals', type: :request do
         smart_goal.reload
         expect(smart_goal.title).to eq('Updated Goal Title')
         expect(smart_goal.description).to eq('Updated description')
-        expect(smart_goal.completed).to eq(true)
+        expect(smart_goal.completed).to be(true)
       end
     end
 
@@ -254,7 +258,7 @@ RSpec.describe 'Api::V1::SmartGoals', type: :request do
         patch api_v1_smart_goal_path(smart_goal), params: partial_params
 
         expect(response).to have_http_status(:ok)
-        json_response = JSON.parse(response.body)
+        json_response = response.parsed_body
 
         expect(json_response['title']).to eq('Partially Updated Title')
         expect(json_response['description']).to eq(original_description)
@@ -279,7 +283,7 @@ RSpec.describe 'Api::V1::SmartGoals', type: :request do
       it 'returns error messages' do
         patch api_v1_smart_goal_path(smart_goal), params: invalid_params
 
-        json_response = JSON.parse(response.body)
+        json_response = response.parsed_body
         expect(json_response['errors']).to include('Timeframe is not included in the list')
       end
 

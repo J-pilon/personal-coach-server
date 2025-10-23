@@ -90,3 +90,9 @@ package-lock.json
 
 # Ignore rvm files.
 .rvmrc
+
+/config/credentials/test.key
+
+/config/credentials/development.key
+
+/config/credentials/production.key

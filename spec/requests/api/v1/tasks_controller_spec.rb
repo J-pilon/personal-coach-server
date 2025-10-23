@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 RSpec.describe 'Api::V1::Tasks', type: :request do
@@ -16,16 +18,16 @@ RSpec.describe 'Api::V1::Tasks', type: :request do
         get api_v1_tasks_path
 
         expect(response).to have_http_status(:ok)
-        json_response = JSON.parse(response.body)
+        json_response = response.parsed_body
 
         expect(json_response.length).to eq(3)
-        expect(json_response.map { |task| task['id'] }).to match_array(tasks.map(&:id))
+        expect(json_response.pluck('id')).to match_array(tasks.map(&:id))
       end
 
       it 'returns task data with correct attributes' do
         get api_v1_tasks_path
 
-        json_response = JSON.parse(response.body)
+        json_response = response.parsed_body
         task = json_response.first
 
         expect(task).to include(
@@ -44,7 +46,7 @@ RSpec.describe 'Api::V1::Tasks', type: :request do
         get api_v1_tasks_path
 
         expect(response).to have_http_status(:ok)
-        json_response = JSON.parse(response.body)
+        json_response = response.parsed_body
 
         expect(json_response).to eq([])
       end
@@ -59,7 +61,7 @@ RSpec.describe 'Api::V1::Tasks', type: :request do
         get api_v1_task_path(task)
 
         expect(response).to have_http_status(:ok)
-        json_response = JSON.parse(response.body)
+        json_response = response.parsed_body
 
         expect(json_response['id']).to eq(task.id)
         expect(json_response['title']).to eq(task.title)
@@ -110,12 +112,12 @@ RSpec.describe 'Api::V1::Tasks', type: :request do
         post api_v1_tasks_path, params: valid_params
 
         expect(response).to have_http_status(:created)
-        json_response = JSON.parse(response.body)
+        json_response = response.parsed_body
 
         expect(json_response['profile_id']).to eq(profile.id)
         expect(json_response['title']).to eq('Complete project documentation')
         expect(json_response['description']).to eq('Write comprehensive documentation for the new feature')
-        expect(json_response['completed']).to eq(false)
+        expect(json_response['completed']).to be(false)
         expect(json_response['action_category']).to eq('do')
       end
     end
@@ -147,7 +149,7 @@ RSpec.describe 'Api::V1::Tasks', type: :request do
         it 'returns error messages' do
           post api_v1_tasks_path, params: invalid_params
 
-          json_response = JSON.parse(response.body)
+          json_response = response.parsed_body
           expect(json_response['errors']).to include("Title can't be blank")
         end
       end
@@ -192,11 +194,11 @@ RSpec.describe 'Api::V1::Tasks', type: :request do
         patch api_v1_task_path(task), params: valid_params
 
         expect(response).to have_http_status(:ok)
-        json_response = JSON.parse(response.body)
+        json_response = response.parsed_body
 
         expect(json_response['title']).to eq('Updated task title')
         expect(json_response['description']).to eq('Updated task description')
-        expect(json_response['completed']).to eq(true)
+        expect(json_response['completed']).to be(true)
         expect(json_response['action_category']).to eq('delegate')
       end
 
@@ -206,7 +208,7 @@ RSpec.describe 'Api::V1::Tasks', type: :request do
         task.reload
         expect(task.title).to eq('Updated task title')
         expect(task.description).to eq('Updated task description')
-        expect(task.completed).to eq(true)
+        expect(task.completed).to be(true)
         expect(task.action_category).to eq('delegate')
       end
     end
@@ -226,9 +228,9 @@ RSpec.describe 'Api::V1::Tasks', type: :request do
         patch api_v1_task_path(task), params: partial_params
 
         expect(response).to have_http_status(:ok)
-        json_response = JSON.parse(response.body)
+        json_response = response.parsed_body
 
-        expect(json_response['completed']).to eq(true)
+        expect(json_response['completed']).to be(true)
         expect(json_response['title']).to eq(original_title)
       end
     end
@@ -251,7 +253,7 @@ RSpec.describe 'Api::V1::Tasks', type: :request do
       it 'returns error messages' do
         patch api_v1_task_path(task), params: invalid_params
 
-        json_response = JSON.parse(response.body)
+        json_response = response.parsed_body
         expect(json_response['errors']).to include('Action category is not included in the list')
       end
 

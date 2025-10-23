@@ -14,8 +14,6 @@ class ApplicationController < ActionController::API
 
   # Helper method to build job status response
   def build_job_status_response(job_id, status_data)
-    resp = JobStatusService.build_status_response(job_id, status_data)
-    puts "******** Application Controller", resp, "********"
-    resp
+    JobStatusService.build_status_response(job_id, status_data)
   end
 end

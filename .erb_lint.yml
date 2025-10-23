@@ -1,0 +1,40 @@
+---
+# .erb_lint.yml
+# Configuration for ERB Lint
+# See https://github.com/Shopify/erb-lint#configuration
+
+EnableDefaultLinters: true
+
+linters:
+  ErbSafety:
+    enabled: true
+
+  NoJavascriptTagHelper:
+    enabled: true
+
+  NoUnusedDisable:
+    enabled: true
+
+  ParserErrors:
+    enabled: true
+
+  RightToLeft:
+    enabled: true
+
+  SpaceAroundErbTag:
+    enabled: true
+
+  SpaceErbTagStart:
+    enabled: true
+
+  UnusedDisable:
+    enabled: true
+
+exclude:
+  - 'vendor/**/*'
+  - 'node_modules/**/*'
+  - 'tmp/**/*'
+  - 'log/**/*'
+  - 'storage/**/*'
+  - 'public/**/*'
+  - 'coverage/**/*'

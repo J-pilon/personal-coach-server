@@ -1,0 +1,143 @@
+# frozen_string_literal: true
+
+plugins:
+  - rubocop-rails
+  - rubocop-rspec
+
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 3.1
+  Exclude:
+    - 'db/schema.rb'
+    - 'db/migrate/*'
+    - 'bin/*'
+    - 'config/**/*'
+    - 'vendor/**/*'
+    - 'node_modules/**/*'
+    - 'tmp/**/*'
+    - 'log/**/*'
+    - 'storage/**/*'
+    - 'public/**/*'
+    - 'coverage/**/*'
+
+# Style
+Style/Documentation:
+  Enabled: false
+
+Style/StringLiterals:
+  EnforcedStyle: single_quotes
+
+Style/FrozenStringLiteralComment:
+  Enabled: true
+
+Style/ClassAndModuleChildren:
+  Enabled: false
+
+# Layout
+Layout/LineLength:
+  Max: 120
+  Exclude:
+    - 'config/**/*'
+    - 'db/schema.rb'
+
+Layout/MultilineMethodCallIndentation:
+  EnforcedStyle: aligned
+
+Layout/ArgumentAlignment:
+  EnforcedStyle: with_first_argument
+
+# Metrics
+Metrics/AbcSize:
+  Max: 40
+
+Metrics/MethodLength:
+  Max: 30
+
+Metrics/ClassLength:
+  Max: 200
+
+Metrics/ModuleLength:
+  Max: 200
+
+Metrics/BlockLength:
+  Exclude:
+    - 'spec/**/*'
+    - 'config/routes.rb'
+    - 'config/environments/*.rb'
+
+# Rails
+Rails/FilePath:
+  Enabled: false
+
+Rails/Output:
+  Exclude:
+    - 'db/seeds.rb'
+
+Rails/UnknownEnv:
+  Exclude:
+    - 'config/environments/*.rb'
+
+Rails/I18nLocaleTexts:
+  Enabled: false
+
+# RSpec
+RSpec/ExampleLength:
+  Max: 20
+
+RSpec/MultipleExpectations:
+  Max: 8
+
+RSpec/NestedGroups:
+  Max: 6
+
+RSpec/DescribeClass:
+  Exclude:
+    - 'spec/features/**/*'
+    - 'spec/requests/**/*'
+    - 'spec/system/**/*'
+
+RSpec/InstanceVariable:
+  Enabled: false
+
+RSpec/MultipleMemoizedHelpers:
+  Max: 8
+
+RSpec/MultipleDescribes:
+  Enabled: false
+
+RSpec/NamedSubject:
+  Enabled: false
+
+RSpec/IndexedLet:
+  Enabled: false
+
+RSpec/LetSetup:
+  Enabled: false
+
+RSpec/DescribeMethod:
+  Enabled: false
+
+# Security
+Security/Eval:
+  Enabled: true
+
+Security/MarshalLoad:
+  Enabled: true
+
+# Performance (moved to rubocop-performance gem)
+
+# Lint
+Lint/UnusedBlockArgument:
+  Exclude:
+    - 'spec/**/*'
+
+Lint/UnusedMethodArgument:
+  Exclude:
+    - 'spec/**/*'
+
+Lint/DuplicateBranch:
+  Enabled: false
+
+# Naming
+Naming/PredicatePrefix:
+  Enabled: false

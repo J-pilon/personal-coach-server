@@ -52,11 +52,11 @@ RSpec.describe Ai::AiService do
       end
 
       it 'calls the appropriate prompt template' do
-        allow(mock_open_ai_client).to receive(:chat_completion).with(
-          include('SMART goal creation')
-        ).and_return(ai_response)
+        allow(mock_open_ai_client).to receive(:chat_completion).and_return(ai_response)
 
         service.process(input, timeframe)
+
+        expect(mock_open_ai_client).to have_received(:chat_completion).with(include('SMART goal creation'))
       end
     end
 
@@ -99,11 +99,11 @@ RSpec.describe Ai::AiService do
       end
 
       it 'calls the appropriate prompt template' do
-        allow(mock_open_ai_client).to receive(:chat_completion).with(
-          include('task prioritization')
-        ).and_return(ai_response)
+        allow(mock_open_ai_client).to receive(:chat_completion).and_return(ai_response)
 
         service.process(input, timeframe)
+
+        expect(mock_open_ai_client).to have_received(:chat_completion).with(include('task prioritization'))
       end
     end
 

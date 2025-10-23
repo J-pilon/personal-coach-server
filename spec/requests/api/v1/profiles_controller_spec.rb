@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 RSpec.describe 'Api::V1::Profiles', type: :request do
@@ -14,7 +16,7 @@ RSpec.describe 'Api::V1::Profiles', type: :request do
         get api_v1_profile_path(profile)
 
         expect(response).to have_http_status(:ok)
-        json_response = JSON.parse(response.body)
+        json_response = response.parsed_body
 
         expect(json_response['id']).to eq(profile.id)
         expect(json_response['user_id']).to eq(user.id)
@@ -52,7 +54,7 @@ RSpec.describe 'Api::V1::Profiles', type: :request do
         patch api_v1_profile_path(profile), params: valid_params
 
         expect(response).to have_http_status(:ok)
-        json_response = JSON.parse(response.body)
+        json_response = response.parsed_body
 
         expect(json_response['first_name']).to eq('John')
         expect(json_response['last_name']).to eq('Doe')
@@ -88,7 +90,7 @@ RSpec.describe 'Api::V1::Profiles', type: :request do
         patch api_v1_profile_path(profile), params: partial_params
 
         expect(response).to have_http_status(:ok)
-        json_response = JSON.parse(response.body)
+        json_response = response.parsed_body
 
         expect(json_response['first_name']).to eq('Jane')
         expect(json_response['last_name']).to eq(original_last_name)
@@ -113,7 +115,7 @@ RSpec.describe 'Api::V1::Profiles', type: :request do
       it 'returns error messages' do
         patch api_v1_profile_path(profile), params: invalid_params
 
-        json_response = JSON.parse(response.body)
+        json_response = response.parsed_body
         expect(json_response['errors']).to include('Onboarding status is not included in the list')
       end
     end
@@ -129,7 +131,7 @@ RSpec.describe 'Api::V1::Profiles', type: :request do
         patch complete_onboarding_api_v1_profile_path(profile)
 
         expect(response).to have_http_status(:ok)
-        json_response = JSON.parse(response.body)
+        json_response = response.parsed_body
         expect(json_response['onboarding_status']).to eq('complete')
       end
 
@@ -151,7 +153,7 @@ RSpec.describe 'Api::V1::Profiles', type: :request do
         patch complete_onboarding_api_v1_profile_path(profile)
 
         expect(response).to have_http_status(:ok)
-        json_response = JSON.parse(response.body)
+        json_response = response.parsed_body
         expect(json_response['onboarding_status']).to eq('complete')
       end
 

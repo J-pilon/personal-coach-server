@@ -5,8 +5,6 @@ module Api
     class AiController < ApplicationController
       before_action :authenticate_api_v1_user!
 
-      # rubocop:disable Metrics/AbcSize
-      # rubocop:disable Metrics/MethodLength
       def create
         input = params[:input]
 

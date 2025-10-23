@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:disable Metrics/BlockLength
 
 require 'rails_helper'
 
@@ -87,7 +86,7 @@ RSpec.describe 'Api::V1::AiController', type: :request do
           using_own_key: false,
           remaining: 0,
           total_limit: 3,
-          reset_time: (Time.current + 24.hours).to_s,
+          reset_time: 24.hours.from_now.to_s,
           error: limit_message,
           reason: 'daily_limit_exceeded'
         )
@@ -109,7 +108,7 @@ RSpec.describe 'Api::V1::AiController', type: :request do
           using_own_key: false,
           remaining: 2,
           total_limit: 3,
-          reset_time: (Time.current + 24.hours).to_s
+          reset_time: 24.hours.from_now.to_s
         )
       end
 
@@ -146,7 +145,7 @@ RSpec.describe 'Api::V1::AiController', type: :request do
           using_own_key: false,
           remaining: 2,
           total_limit: 3,
-          reset_time: (Time.current + 24.hours).to_s
+          reset_time: 24.hours.from_now.to_s
         )
       end
 
@@ -248,7 +247,7 @@ RSpec.describe 'Api::V1::AiController', type: :request do
           using_own_key: false,
           remaining: 0,
           total_limit: 3,
-          reset_time: (Time.current + 24.hours).to_s,
+          reset_time: 24.hours.from_now.to_s,
           error: limit_message,
           reason: 'daily_limit_exceeded'
         )

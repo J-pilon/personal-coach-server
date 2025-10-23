@@ -17,13 +17,6 @@ class SmartGoal < ApplicationRecord
   scope :pending, -> { where(completed: false) }
 
   def timeframe_display
-    case timeframe
-    when '1_month'
-      '1 Month'
-    when '3_months'
-      '3 Months'
-    when '6_months'
-      '6 Months'
-    end
+    timeframe.humanize
   end
 end

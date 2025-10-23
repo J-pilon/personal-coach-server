@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 RSpec.describe Api::V1::TicketsController, type: :request do
@@ -36,13 +38,15 @@ RSpec.describe Api::V1::TicketsController, type: :request do
         expect(response).to have_http_status(:created)
 
         ticket = Ticket.last
-        expect(ticket.kind).to eq('bug')
-        expect(ticket.title).to eq('Test Bug Report')
-        expect(ticket.description).to eq('This is a test bug report with detailed description.')
-        expect(ticket.source).to eq('app')
-        expect(ticket.profile.user).to eq(user)
-        expect(ticket.metadata['app_version']).to eq('1.0.0')
-        expect(ticket.metadata['device_model']).to eq('iPhone 14')
+        aggregate_failures 'diagnostics metadata' do
+          expect(ticket.kind).to eq('bug')
+          expect(ticket.title).to eq('Test Bug Report')
+          expect(ticket.description).to eq('This is a test bug report with detailed description.')
+          expect(ticket.source).to eq('app')
+          expect(ticket.profile.user).to eq(user)
+          expect(ticket.metadata['app_version']).to eq('1.0.0')
+          expect(ticket.metadata['device_model']).to eq('iPhone 14')
+        end
       end
     end
 

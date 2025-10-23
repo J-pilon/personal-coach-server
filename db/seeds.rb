@@ -4,7 +4,7 @@
 # development, test). The code here should be idempotent so that it can be executed at any point in every environment.
 # The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
 
-puts "Creating sample user and profile..."
+puts 'Creating sample user and profile...'
 
 # Create a sample user
 user = User.find_or_create_by!(email: 'john.doe@example.com') do |u|
@@ -20,7 +20,8 @@ profile.update!(
   last_name: 'Doe',
   work_role: 'Software Engineer',
   education: 'Bachelor of Computer Science',
-  desires: 'I want to become a senior developer and lead technical projects. I also want to maintain a healthy work-life balance.',
+  desires: 'I want to become a senior developer and lead technical projects. I also want to maintain a healthy |
+            work-life balance.',
   limiting_beliefs: 'I sometimes doubt my abilities and think I need to work longer hours to be successful.',
   onboarding_status: 'complete',
   onboarding_completed_at: Time.current
@@ -35,7 +36,8 @@ tasks_data = [
   { title: 'Read a book', description: 'Finish reading the current novel', completed: false, action_category: 'do' },
   { title: 'Workout', description: '30 minutes of cardio', completed: false, action_category: 'do' },
   { title: 'Call mom', description: 'Check in and say hello', completed: false, action_category: 'delegate' },
-  { title: 'Clean the house', description: 'Vacuum and dust living room', completed: false, action_category: 'delegate' },
+  { title: 'Clean the house', description: 'Vacuum and dust living room', completed: false,
+    action_category: 'delegate' },
   { title: 'Write journal', description: 'Reflect on the day', completed: false, action_category: 'defer' },
   { title: 'Plan weekend trip', description: 'Research destinations', completed: false, action_category: 'defer' },
   { title: 'Pay bills', description: 'Electricity and internet', completed: false, action_category: 'do' },
@@ -52,4 +54,4 @@ tasks_data.each do |task_attrs|
 end
 
 puts "Created #{profile.tasks.count} tasks for #{profile.full_name}"
-puts "Seeding completed successfully!"
+puts 'Seeding completed successfully!'

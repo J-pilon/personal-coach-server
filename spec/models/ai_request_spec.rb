@@ -54,13 +54,13 @@ RSpec.describe AiRequest, type: :model do
 
     it 'finds request by prompt hash' do
       hash_value = Digest::SHA256.hexdigest(prompt)
-      found_request = described_class.find_by_prompt_hash(hash_value)
+      found_request = described_class.find_by(hash_value: hash_value)
 
       expect(found_request).to eq(ai_request)
     end
 
     it 'returns nil when hash not found' do
-      found_request = described_class.find_by_prompt_hash('nonexistent_hash')
+      found_request = described_class.find_by(hash_value: 'nonexistent_hash')
       expect(found_request).to be_nil
     end
   end

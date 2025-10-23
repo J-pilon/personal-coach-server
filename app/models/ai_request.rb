@@ -7,7 +7,9 @@ class AiRequest < ApplicationRecord
 
   validates :prompt, presence: true
   validates :job_type, presence: true, inclusion: { in: %w[smart_goal prioritization task_suggestion] }
-  validates :hash_value, presence: true, uniqueness: true
+  validates :hash_value, presence: true
+  # TODO: Add unique index on the db column and then uncomment the line below
+  # validates :hash_value, presence: true, uniqueness: true
 
   before_validation :generate_hash_value, on: :create
 
@@ -33,7 +35,7 @@ class AiRequest < ApplicationRecord
 
   # Create a new AI request with automatic hash generation
   def self.create_with_prompt(profile_id:, prompt:, job_type:, status: 'pending')
-    existing_request = find_by_prompt_hash(Digest::SHA256.hexdigest(prompt))
+    existing_request = find_by(hash_value: Digest::SHA256.hexdigest(prompt))
 
     existing_request || create!(
       profile_id: profile_id,

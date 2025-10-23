@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  push:
+    branches-ignore: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: personal_coach_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/personal_coach_test
+      REDIS_URL: redis://localhost:6379/0
+      RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
+      RAILS_ENV: test
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.3.0
+          bundler-cache: true
+          bundler-version: latest
+
+      - name: Set up test credentials
+        run: |
+          mkdir -p config/credentials
+          echo "${{ secrets.RAILS_TEST_KEY }}" > config/credentials/test.key
+      
+      - name: Setup Database
+        run: bin/rails db:test:prepare
+      
+      - name: Run RSpec tests
+        run: bundle exec rspec
+
+  security:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.3.0
+          bundler-cache: true
+          bundler-version: latest
+      
+      - name: Run Brakeman security scan
+        run: bundle exec brakeman -q --no-pager
+      
+      - name: Run Bundle Audit
+        run: bundle exec bundle-audit check --update
+
+  lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.3.0
+          bundler-cache: true
+          bundler-version: latest
+      
+      - name: Run Rubocop
+        run: bundle exec rubocop
+      
+      - name: Run ERB Lint
+        run: bundle exec erb_lint --lint-all

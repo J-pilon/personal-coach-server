@@ -1,0 +1,50 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'English'
+
+puts 'Running static code analyzer, linter, and formatter...'
+puts '=' * 60
+
+# Run RuboCop with auto-correct
+puts "\nRunning RuboCop with auto-correct..."
+rubocop_output = `bundle exec rubocop -A 2>&1`
+rubocop_status = $CHILD_STATUS.success?
+
+puts rubocop_output
+
+# Parse RuboCop output for statistics
+total_offenses = 0
+autocorrected = 0
+
+if rubocop_output =~ /(\d+) offenses? detected/
+  total_offenses = Regexp.last_match(1).to_i
+  autocorrected = Regexp.last_match(1).to_i if rubocop_output =~ /(\d+) offenses? autocorrected/
+elsif rubocop_output =~ /no offenses detected/
+  total_offenses = 0
+  autocorrected = 0
+end
+
+remaining = total_offenses - autocorrected
+
+puts "\n#{'=' * 60}"
+puts 'RuboCop Summary:'
+puts "  Autocorrected: #{autocorrected} offense#{'s' unless autocorrected == 1}"
+puts "  Remaining: #{remaining} offense#{'s' unless remaining == 1}"
+puts '=' * 60
+
+# Run ERB Lint
+puts "\nRunning ERB Lint..."
+erb_lint_output = `bundle exec erb_lint --lint-all 2>&1`
+erb_lint_status = $CHILD_STATUS.success?
+
+puts erb_lint_output
+
+puts "\n#{'=' * 60}"
+if rubocop_status && erb_lint_status
+  puts 'All linting checks passed!'
+  exit 0
+else
+  puts 'Linting checks failed. Please review and fix the remaining issues.'
+  exit 1
+end
