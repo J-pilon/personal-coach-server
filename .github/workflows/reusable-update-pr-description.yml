@@ -1,0 +1,125 @@
+name: Update PR Description
+
+on:
+  workflow_call:
+    inputs:
+      content:
+        description: 'Content to add to PR description'
+        required: true
+        type: string
+      section_id:
+        description: 'Unique identifier for the section (used for section-based updates)'
+        required: false
+        type: string
+        default: 'WORKFLOW_UPDATE'
+      body_update_action:
+        description: 'How to update the body: "prefix", "suffix", "replace", or "section"'
+        required: false
+        type: string
+        default: 'section'
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  update-pr:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Update PR description
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const content = `${{ inputs.content }}`;
+            const sectionId = `${{ inputs.section_id }}`;
+            const bodyUpdateAction = `${{ inputs.body_update_action }}`;
+            
+            let prNumber;
+            let currentBody = '';
+            
+            // Get PR number based on event type
+            if (context.eventName === 'pull_request') {
+              prNumber = context.payload.pull_request.number;
+              currentBody = context.payload.pull_request.body || '';
+              console.log(`Found PR #${prNumber} from pull_request event`);
+            } else {
+              // For push events, find PR by branch name
+              const branch = context.ref.replace('refs/heads/', '');
+              console.log(`Looking for PR associated with branch: ${branch}`);
+              
+              const { data: pullRequests } = await github.rest.pulls.list({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                head: `${context.repo.owner}:${branch}`,
+                state: 'open'
+              });
+              
+              if (pullRequests.length === 0) {
+                console.log(`No open PR found for branch ${branch}`);
+                return;
+              }
+              
+              prNumber = pullRequests[0].number;
+              currentBody = pullRequests[0].body || '';
+              console.log(`Found PR #${prNumber} from branch ${branch}`);
+            }
+            
+            // Prepare the content with section markers for section mode
+            const processedContent = bodyUpdateAction === 'section' 
+              ? `<!-- ${sectionId}_START -->\n${content}\n<!-- ${sectionId}_END -->`
+              : content;
+            
+            let newBody;
+            
+            // Determine update strategy
+            switch (bodyUpdateAction) {
+              case 'prefix':
+                // Add to beginning if not already there
+                const shouldAddPrefix = !currentBody.toLowerCase().startsWith(processedContent.toLowerCase());
+                newBody = shouldAddPrefix ? `${processedContent}\n\n${currentBody}` : currentBody;
+                break;
+                
+              case 'suffix':
+                // Add to end if not already there
+                const shouldAddSuffix = !currentBody.toLowerCase().endsWith(processedContent.toLowerCase());
+                newBody = shouldAddSuffix ? `${currentBody}\n\n${processedContent}` : currentBody;
+                break;
+                
+              case 'replace':
+                // Replace entire body
+                const shouldReplace = currentBody.toLowerCase() !== processedContent.toLowerCase();
+                newBody = shouldReplace ? processedContent : currentBody;
+                break;
+                
+              case 'section':
+              default:
+                // Section-based update: remove old section and add new
+                const sectionRegex = new RegExp(
+                  `<!-- ${sectionId}_START -->.*?<!-- ${sectionId}_END -->\\n?`,
+                  'gs'
+                );
+                
+                // Remove existing section
+                const bodyWithoutSection = currentBody.replace(sectionRegex, '').trim();
+                
+                // Add new section
+                newBody = bodyWithoutSection 
+                  ? `${bodyWithoutSection}\n\n${processedContent}`
+                  : processedContent;
+                break;
+            }
+            
+            // Only update if body has changed
+            if (newBody !== currentBody) {
+              await github.rest.pulls.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+                body: newBody
+              });
+              
+              console.log(`✅ Successfully updated PR #${prNumber} with ${bodyUpdateAction} mode`);
+            } else {
+              console.log(`ℹ️  No update needed for PR #${prNumber} - content already present`);
+            }
