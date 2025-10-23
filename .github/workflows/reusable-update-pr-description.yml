@@ -23,17 +23,21 @@ permissions:
   contents: read
 
 jobs:
-  update-pr:
+  update-pr-description:
     runs-on: ubuntu-latest
     
     steps:
       - name: Update PR description
         uses: actions/github-script@v7
+        env:
+          CONTENT: ${{ inputs.content }}
+          SECTION_ID: ${{ inputs.section_id }}
+          BODY_UPDATE_ACTION: ${{ inputs.body_update_action }}
         with:
           script: |
-            const content = `${{ inputs.content }}`;
-            const sectionId = `${{ inputs.section_id }}`;
-            const bodyUpdateAction = `${{ inputs.body_update_action }}`;
+            const content = process.env.CONTENT;
+            const sectionId = process.env.SECTION_ID;
+            const bodyUpdateAction = process.env.BODY_UPDATE_ACTION;
             
             let prNumber;
             let currentBody = '';
