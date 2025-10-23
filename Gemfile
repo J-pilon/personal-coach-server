@@ -68,4 +68,5 @@ group :development do
 
   # Security
   gem "bundle-audit", "~> 0.1.0"
+  gem "brakeman", "~> 7.1"
 end
