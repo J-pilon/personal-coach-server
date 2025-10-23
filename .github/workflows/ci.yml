@@ -53,6 +53,11 @@ jobs:
           ruby-version: 3.3.0
           bundler-cache: true
           bundler-version: latest
+
+      - name: Set up test credentials
+        run: |
+          mkdir -p config/credentials
+          echo "${{ secrets.RAILS_TEST_KEY }}" > config/credentials/test.key
       
       - name: Setup Database
         run: bin/rails db:test:prepare
