@@ -80,7 +80,7 @@ user_count.times do |i|
   # Ensure profile exists and is properly configured
   test_profile = test_user.profile
   test_profile.update!(
-    first_name: "Test",
+    first_name: 'Test',
     last_name: "User#{user_number}",
     work_role: 'Performance Test User',
     education: 'Test Education',
