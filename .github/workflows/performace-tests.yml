@@ -1,0 +1,213 @@
+name: Performance Tests
+
+on: 
+  push: 
+    branches-ignore: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  performance-test:
+    runs-on: ubuntu-latest
+    outputs:
+      p95: ${{ steps.k6-test.outputs.p95 }}
+      p90: ${{ steps.k6-test.outputs.p90 }}
+      avg: ${{ steps.k6-test.outputs.avg }}
+      fail_rate: ${{ steps.k6-test.outputs.fail_rate }}
+      total_requests: ${{ steps.k6-test.outputs.total_requests }}
+      checks_passed: ${{ steps.k6-test.outputs.checks_passed }}
+      checks_failed: ${{ steps.k6-test.outputs.checks_failed }}
+      iterations: ${{ steps.k6-test.outputs.iterations }}
+      vus: ${{ steps.k6-test.outputs.vus }}
+      duration: ${{ steps.k6-test.outputs.duration }}
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: personal_coach_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    env: 
+      RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
+      RAILS_ENV: test
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/personal_coach_test
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: postgres
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3.0'
+          bundler-cache: true
+
+      - name: Setup Node.js (for K6)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Setup K6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Set up test credentials
+        run: |
+          mkdir -p config/credentials
+          echo "${{ secrets.RAILS_TEST_KEY }}" > config/credentials/test.key
+
+      - name: Create and seed database
+        run: |
+          bundle exec rails db:create
+          bundle exec rails db:migrate
+          bundle exec rails db:seed -- --user-count=50
+
+      - name: Start Rails server
+        env:
+          RAILS_LOG_TO_STDOUT: true
+        run: |
+          bundle exec rails s -p 3000 &
+          sleep 5
+          # Wait for server to be ready
+          until curl -f http://localhost:3000/up; do
+            sleep 1
+          done
+
+      - name: Run performance tests
+        id: k6-test
+        run: |
+          # Run K6 and capture output
+          k6 run performance-tests/ai_usage_test.js 2>&1 | tee k6_output.txt || true
+          
+          # Parse metrics from K6's text output using grep and awk
+          # Extract http_req_duration p95
+          P95=$(grep "http_req_duration" k6_output.txt | grep -oP 'p\(95\)=\K[0-9.]+' | head -1 || echo "0")
+          
+          # Extract http_req_duration p90
+          P90=$(grep "http_req_duration" k6_output.txt | grep -oP 'p\(90\)=\K[0-9.]+' | head -1 || echo "0")
+          
+          # Extract http_req_duration avg
+          AVG=$(grep "http_req_duration" k6_output.txt | grep -oP 'avg=\K[0-9.]+' | head -1 || echo "0")
+          
+          # Extract http_req_failed rate
+          FAIL_RATE=$(grep "http_req_failed" k6_output.txt | grep -oP 'rate=\K[0-9.]+' | head -1 || echo "0")
+          
+          # Extract total http requests
+          TOTAL_REQUESTS=$(grep "http_reqs" k6_output.txt | grep -oP '^\s*http_reqs.*?:\s+\K[0-9]+' || echo "0")
+          
+          # Extract checks passed (from checks_succeeded line)
+          CHECKS_LINE=$(grep "checks_succeeded" k6_output.txt || echo "0 out of 0")
+          CHECKS_PASSED=$(echo "$CHECKS_LINE" | grep -oP '\d+ out of \K[0-9]+' || echo "0")
+          CHECKS_TOTAL=$(echo "$CHECKS_LINE" | grep -oP '\K[0-9]+(?= out of)' || echo "0")
+          CHECKS_FAILED=$((CHECKS_TOTAL - CHECKS_PASSED))
+          
+          # Extract iterations
+          ITERATIONS=$(grep "iterations\." k6_output.txt | grep -oP '^\s*iterations.*?:\s+\K[0-9]+' || echo "0")
+          
+          # Extract VUs
+          VUS=$(grep "vus\." k6_output.txt | grep -oP 'min=\K[0-9]+' | head -1 || echo "0")
+          
+          # Extract iteration_duration avg
+          DURATION=$(grep "iteration_duration" k6_output.txt | grep -oP 'avg=\K[0-9.]+' | head -1 || echo "0")
+          
+          # Convert to readable format with default handling
+          # Ensure variables have default values if empty
+          P95=${P95:-0}
+          P90=${P90:-0}
+          AVG=${AVG:-0}
+          FAIL_RATE=${FAIL_RATE:-0}
+          DURATION=${DURATION:-0}
+          TOTAL_REQUESTS=${TOTAL_REQUESTS:-0}
+          CHECKS_PASSED=${CHECKS_PASSED:-0}
+          CHECKS_FAILED=${CHECKS_FAILED:-0}
+          ITERATIONS=${ITERATIONS:-0}
+          VUS=${VUS:-0}
+          
+          # Values are already in the right format from K6 output
+          # P95, P90, AVG are in milliseconds without unit (e.g., "24.17")
+          # FAIL_RATE is a decimal (e.g., "0.00" for 0%)
+          # DURATION is in seconds (e.g., "1.07")
+          
+          # Format to 2 decimal places
+          P95_MS=$(printf "%.2f" "$P95" 2>/dev/null || echo "0.00")
+          P90_MS=$(printf "%.2f" "$P90" 2>/dev/null || echo "0.00")
+          AVG_MS=$(printf "%.2f" "$AVG" 2>/dev/null || echo "0.00")
+          
+          # FAIL_RATE from K6 is already 0-1 range, multiply by 100 for percentage
+          if [ -n "$FAIL_RATE" ] && [ "$FAIL_RATE" != "0" ] && [ "$FAIL_RATE" != "0.00" ]; then
+            FAIL_RATE_PCT=$(echo "scale=2; $FAIL_RATE * 100" | bc -l 2>/dev/null || echo "0.00")
+          else
+            FAIL_RATE_PCT="0.00"
+          fi
+          
+          # DURATION is already in seconds from K6
+          DURATION_S=$(printf "%.2f" "$DURATION" 2>/dev/null || echo "0.00")
+          
+          # Set outputs
+          echo "p95=${P95_MS}" >> $GITHUB_OUTPUT
+          echo "p90=${P90_MS}" >> $GITHUB_OUTPUT
+          echo "avg=${AVG_MS}" >> $GITHUB_OUTPUT
+          echo "fail_rate=${FAIL_RATE_PCT}" >> $GITHUB_OUTPUT
+          echo "total_requests=${TOTAL_REQUESTS}" >> $GITHUB_OUTPUT
+          echo "checks_passed=${CHECKS_PASSED}" >> $GITHUB_OUTPUT
+          echo "checks_failed=${CHECKS_FAILED}" >> $GITHUB_OUTPUT
+          echo "iterations=${ITERATIONS}" >> $GITHUB_OUTPUT
+          echo "vus=${VUS}" >> $GITHUB_OUTPUT
+          echo "duration=${DURATION_S}" >> $GITHUB_OUTPUT
+          
+          echo "📊 Performance Test Metrics:"
+          echo "  - P95 Latency: ${P95_MS}ms"
+          echo "  - P90 Latency: ${P90_MS}ms"
+          echo "  - Avg Latency: ${AVG_MS}ms"
+          echo "  - Failure Rate: ${FAIL_RATE_PCT}%"
+          echo "  - Total Requests: ${TOTAL_REQUESTS}"
+          echo "  - Checks Passed: ${CHECKS_PASSED}"
+          echo "  - Checks Failed: ${CHECKS_FAILED}"
+
+  update-pr-with-results:
+    needs: [performance-test]
+    uses: ./.github/workflows/reusable-update-pr-description.yml
+    with:
+      content: |
+        ## 🚀 Performance Test Results
+        
+        ### Key Metrics
+        
+        | Metric | Value | Status |
+        |--------|-------|--------|
+        | **95th Percentile Latency** | ${{ needs.performance-test.outputs.p95 }}ms | ${{ needs.performance-test.outputs.p95 < 500 && '✅ Pass' || '❌ Fail' }} |
+        | **90th Percentile Latency** | ${{ needs.performance-test.outputs.p90 }}ms | - |
+        | **Average Latency** | ${{ needs.performance-test.outputs.avg }}ms | - |
+        | **Failure Rate** | ${{ needs.performance-test.outputs.fail_rate }}% | ${{ needs.performance-test.outputs.fail_rate < 0.1 && '✅ Pass' || '❌ Fail' }} |
+        
+        ### Test Summary
+        
+        - **Total Requests**: ${{ needs.performance-test.outputs.total_requests }}
+        - **Checks Passed**: ${{ needs.performance-test.outputs.checks_passed }}
+        - **Checks Failed**: ${{ needs.performance-test.outputs.checks_failed }}
+        - **Iterations**: ${{ needs.performance-test.outputs.iterations }}
+        - **Virtual Users**: ${{ needs.performance-test.outputs.vus }}
+        - **Avg Iteration Duration**: ${{ needs.performance-test.outputs.duration }}s
+        
+        <details>
+        <summary>Threshold Status</summary>
+        
+        - ✅ `http_req_duration p(95) < 500ms`: **${{ needs.performance-test.outputs.p95 }}ms**
+        - ✅ `http_req_failed rate < 0.1%`: **${{ needs.performance-test.outputs.fail_rate }}%**
+        
+        </details>
+      section_id: PERF_RESULTS
+      body_update_action: section

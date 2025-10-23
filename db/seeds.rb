@@ -4,6 +4,16 @@
 # development, test). The code here should be idempotent so that it can be executed at any point in every environment.
 # The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
 
+# Parse CLI arguments for user count
+# Example: rails db:seed -- --user-count=50
+user_count = 10
+ARGV.each do |arg|
+  if arg.start_with?('--user-count=')
+    user_count = arg.split('=').last.to_i
+    user_count = 10 if user_count <= 0
+  end
+end
+
 puts 'Creating sample user and profile...'
 
 # Create a sample user
@@ -54,4 +64,34 @@ tasks_data.each do |task_attrs|
 end
 
 puts "Created #{profile.tasks.count} tasks for #{profile.full_name}"
+
+# Create test users for performance testing
+puts "\nCreating #{user_count} test users for performance testing..."
+
+user_count.times do |i|
+  user_number = i + 1
+  test_email = "test#{user_number}@example.com"
+
+  test_user = User.find_or_create_by!(email: test_email) do |u|
+    u.password = 'password123'
+    u.password_confirmation = 'password123'
+  end
+
+  # Ensure profile exists and is properly configured
+  test_profile = test_user.profile
+  test_profile.update!(
+    first_name: 'Test',
+    last_name: "User#{user_number}",
+    work_role: 'Performance Test User',
+    education: 'Test Education',
+    desires: 'Test desires for performance testing',
+    limiting_beliefs: 'Test limiting beliefs',
+    onboarding_status: 'complete',
+    onboarding_completed_at: Time.current
+  )
+
+  print '.' if (user_number % 10).zero?
+end
+
+puts "\nCreated #{user_count} test users (test1@example.com through test#{user_count}@example.com)"
 puts 'Seeding completed successfully!'
