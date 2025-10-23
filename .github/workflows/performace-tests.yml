@@ -1,0 +1,75 @@
+name: Performance Tests
+
+on: 
+  push: 
+    branches-ignore: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  performance-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: personal_coach_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    env: 
+      RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
+      RAILS_ENV: test
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/personal_coach_test
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: postgres
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3.0'
+          bundler-cache: true
+
+      - name: Setup Node.js (for K6)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Setup K6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Set up test credentials
+        run: |
+          mkdir -p config/credentials
+          echo "${{ secrets.RAILS_TEST_KEY }}" > config/credentials/test.key
+
+      - name: Create and seed database
+        run: |
+          bundle exec rails db:create
+          bundle exec rails db:migrate
+          bundle exec rails db:seed -- --user-count=50
+
+      - name: Start Rails server
+        env:
+          RAILS_LOG_TO_STDOUT: true
+        run: |
+          bundle exec rails s -p 3000 &
+          sleep 5
+          # Wait for server to be ready
+          until curl -f http://localhost:3000/up; do
+            sleep 1
+          done
+
+      - name: Run performance tests
+        run: k6 run performance-tests/ai_usage_test.js
