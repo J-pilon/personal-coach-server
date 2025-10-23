@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   performance-test:
     runs-on: ubuntu-latest
@@ -73,3 +77,44 @@ jobs:
 
       - name: Run performance tests
         run: k6 run performance-tests/ai_usage_test.js
+
+  update-pr-with-results:
+    needs: [performance-test]
+    uses: ./.github/workflows/reusable-update-pr-description.yml
+    with:
+      content: |
+        ## 🚀 Performance Test Results
+        
+        ```
+        THRESHOLDS 
+          http_req_duration
+          ✓ p(95)<500 p(95)=108.24ms
+          http_req_failed
+          ✓ rate<0.001 rate=0.00%
+        
+        █ TOTAL RESULTS 
+          checks_total.......: 150     27.464768/s
+          checks_succeeded...: 100.00% 150 out of 150
+          checks_failed......: 0.00%   0 out of 150
+          ✓ login successful
+          ✓ usage request successful
+          ✓ logout successful
+        
+        HTTP
+          http_req_duration..............: avg=26.05ms min=2.89ms med=20.15ms max=134.72ms p(90)=39.38ms p(95)=108.24ms
+            { expected_response:true }...: avg=26.05ms min=2.89ms med=20.15ms max=134.72ms p(90)=39.38ms p(95)=108.24ms
+          http_req_failed................: 0.00%  0 out of 150
+          http_reqs......................: 150    27.464768/s
+        
+        EXECUTION
+          iteration_duration.............: avg=1.07s   min=1.01s  med=1.06s   max=1.19s    p(90)=1.18s   p(95)=1.19s   
+          iterations.....................: 50     9.154923/s
+          vus............................: 10     min=10       max=10
+          vus_max........................: 10     min=10       max=10
+        
+        NETWORK
+          data_received..................: 119 kB 22 kB/s
+          data_sent......................: 48 kB  8.8 kB/s
+        ```
+      section_id: PERF_RESULTS
+      body_update_action: section
