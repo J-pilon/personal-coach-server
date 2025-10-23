@@ -9,7 +9,7 @@ class User < ApplicationRecord
   devise :database_authenticatable, :registerable, :recoverable,
          :validatable, :jwt_authenticatable, jwt_revocation_strategy: self
 
-  self.skip_session_storage = [:http_auth, :params_auth]
+  self.skip_session_storage = %i[http_auth params_auth]
 
   has_one :profile, dependent: :destroy
 

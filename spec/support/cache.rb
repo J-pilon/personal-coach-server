@@ -1,4 +1,6 @@
-RSpec.shared_context "with cache", :with_cache do
+# frozen_string_literal: true
+
+RSpec.shared_context 'with cache', :with_cache do
   let(:memory_store) { ActiveSupport::Cache.lookup_store(:memory_store) }
 
   before do

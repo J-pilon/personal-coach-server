@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 source 'https://rubygems.org'
 
 ruby '3.3.0'
@@ -61,12 +63,12 @@ end
 
 group :development do
   # Code linting
+  gem 'erb_lint', '~> 0.9.0'
   gem 'rubocop', require: false
   gem 'rubocop-rails', require: false
   gem 'rubocop-rspec', require: false
-  gem "erb_lint", "~> 0.9.0"
 
   # Security
-  gem "bundle-audit", "~> 0.1.0"
-  gem "brakeman", "~> 7.1"
+  gem 'brakeman', '~> 7.1'
+  gem 'bundle-audit', '~> 0.1.0'
 end

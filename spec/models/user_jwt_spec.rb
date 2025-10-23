@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 RSpec.describe User, type: :model do
@@ -140,7 +142,5 @@ RSpec.describe User, type: :model do
         expect(payload1['jti']).not_to eq(payload2['jti'])
       end
     end
-
-
   end
 end

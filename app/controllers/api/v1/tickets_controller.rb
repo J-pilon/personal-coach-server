@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Api
   module V1
     class TicketsController < ApplicationController
@@ -13,13 +15,6 @@ module Api
           ticket_params.merge(profile: current_api_v1_profile),
           diagnostics_params
         )
-        # puts "*******", @ticket.attributes, "*******"
-        # @ticket = Ticket.new(ticket_params.merge(profile: current_api_v1_profile))
-        # if @ticket.valid?
-        #   puts "******ticket is valid******"
-        # else
-        #   puts @ticket.errors.inspect
-        # end
 
         if @ticket.persisted?
           render json: @ticket, status: :created

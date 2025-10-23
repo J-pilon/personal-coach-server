@@ -40,29 +40,33 @@ RSpec.describe Ai::OpenAiClient do
       end
 
       it 'calls OpenAI with correct parameters' do
-        expect(mock_openai_client).to receive(:chat).with(
+        allow(mock_openai_client).to receive(:chat).and_return(successful_response)
+
+        client.chat_completion(prompt)
+
+        expect(mock_openai_client).to have_received(:chat).with(
           parameters: {
             model: 'gpt-4o',
             messages: [{ role: 'system', content: prompt }],
             temperature: 0.7,
             max_tokens: 1000
           }
-        ).and_return(successful_response)
-
-        client.chat_completion(prompt)
+        )
       end
 
       it 'accepts custom temperature and model' do
-        expect(mock_openai_client).to receive(:chat).with(
+        allow(mock_openai_client).to receive(:chat).and_return(successful_response)
+
+        client.chat_completion(prompt, temperature: 0.5, model: 'gpt-3.5-turbo')
+
+        expect(mock_openai_client).to have_received(:chat).with(
           parameters: {
             model: 'gpt-3.5-turbo',
             messages: [{ role: 'system', content: prompt }],
             temperature: 0.5,
             max_tokens: 1000
           }
-        ).and_return(successful_response)
-
-        client.chat_completion(prompt, temperature: 0.5, model: 'gpt-3.5-turbo')
+        )
       end
     end
 
@@ -117,7 +121,7 @@ RSpec.describe Ai::OpenAiClient do
 
     context 'when OpenAI API raises an error', :slow do
       it 'retries up to MAX_RETRIES times' do
-        expect(mock_openai_client).to receive(:chat).at_least(3).times.and_raise(
+        allow(mock_openai_client).to receive(:chat).and_raise(
           OpenAI::Error.new('API rate limit exceeded')
         )
 
@@ -125,6 +129,8 @@ RSpec.describe Ai::OpenAiClient do
           Ai::OpenAiClient::AiServiceError,
           'OpenAI API error: API rate limit exceeded'
         )
+
+        expect(mock_openai_client).to have_received(:chat).at_least(3).times
       end
     end
 
