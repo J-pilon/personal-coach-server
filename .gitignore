@@ -96,3 +96,7 @@ package-lock.json
 /config/credentials/development.key
 
 /config/credentials/production.key
+
+# Ignore performance test results
+/performance-tests/results/
+summary.json
