@@ -1,8 +1,6 @@
 name: Performance Tests
 
 on: 
-  push: 
-    branches-ignore: [ main ]
   pull_request:
     branches: [ main ]
 
@@ -14,16 +12,7 @@ jobs:
   performance-test:
     runs-on: ubuntu-latest
     outputs:
-      p95: ${{ steps.k6-test.outputs.p95 }}
-      p90: ${{ steps.k6-test.outputs.p90 }}
-      avg: ${{ steps.k6-test.outputs.avg }}
-      fail_rate: ${{ steps.k6-test.outputs.fail_rate }}
-      total_requests: ${{ steps.k6-test.outputs.total_requests }}
-      checks_passed: ${{ steps.k6-test.outputs.checks_passed }}
-      checks_failed: ${{ steps.k6-test.outputs.checks_failed }}
-      iterations: ${{ steps.k6-test.outputs.iterations }}
-      vus: ${{ steps.k6-test.outputs.vus }}
-      duration: ${{ steps.k6-test.outputs.duration }}
+      formatted_results: ${{ steps.format-results.outputs.results }}
 
     services:
       postgres:
@@ -87,127 +76,110 @@ jobs:
           done
 
       - name: Run performance tests
-        id: k6-test
         run: |
-          # Run K6 and capture output
-          k6 run performance-tests/ai_usage_test.js 2>&1 | tee k6_output.txt || true
+          chmod +x scripts/run-all-performance-tests.sh
+          ./scripts/run-all-performance-tests.sh
+      
+      - name: Format test results
+        id: format-results
+        run: |
+          # Parse aggregated JSON and format as markdown
+          AGGREGATED_JSON="performance-tests/results/aggregated.json"
           
-          # Parse metrics from K6's text output using grep and awk
-          # Extract http_req_duration p95
-          P95=$(grep "http_req_duration" k6_output.txt | grep -oP 'p\(95\)=\K[0-9.]+' | head -1 || echo "0")
-          
-          # Extract http_req_duration p90
-          P90=$(grep "http_req_duration" k6_output.txt | grep -oP 'p\(90\)=\K[0-9.]+' | head -1 || echo "0")
-          
-          # Extract http_req_duration avg
-          AVG=$(grep "http_req_duration" k6_output.txt | grep -oP 'avg=\K[0-9.]+' | head -1 || echo "0")
-          
-          # Extract http_req_failed rate
-          FAIL_RATE=$(grep "http_req_failed" k6_output.txt | grep -oP 'rate=\K[0-9.]+' | head -1 || echo "0")
-          
-          # Extract total http requests
-          TOTAL_REQUESTS=$(grep "http_reqs" k6_output.txt | grep -oP '^\s*http_reqs.*?:\s+\K[0-9]+' || echo "0")
-          
-          # Extract checks passed (from checks_succeeded line)
-          CHECKS_LINE=$(grep "checks_succeeded" k6_output.txt || echo "0 out of 0")
-          CHECKS_PASSED=$(echo "$CHECKS_LINE" | grep -oP '\d+ out of \K[0-9]+' || echo "0")
-          CHECKS_TOTAL=$(echo "$CHECKS_LINE" | grep -oP '\K[0-9]+(?= out of)' || echo "0")
-          CHECKS_FAILED=$((CHECKS_TOTAL - CHECKS_PASSED))
-          
-          # Extract iterations
-          ITERATIONS=$(grep "iterations\." k6_output.txt | grep -oP '^\s*iterations.*?:\s+\K[0-9]+' || echo "0")
-          
-          # Extract VUs
-          VUS=$(grep "vus\." k6_output.txt | grep -oP 'min=\K[0-9]+' | head -1 || echo "0")
-          
-          # Extract iteration_duration avg
-          DURATION=$(grep "iteration_duration" k6_output.txt | grep -oP 'avg=\K[0-9.]+' | head -1 || echo "0")
-          
-          # Convert to readable format with default handling
-          # Ensure variables have default values if empty
-          P95=${P95:-0}
-          P90=${P90:-0}
-          AVG=${AVG:-0}
-          FAIL_RATE=${FAIL_RATE:-0}
-          DURATION=${DURATION:-0}
-          TOTAL_REQUESTS=${TOTAL_REQUESTS:-0}
-          CHECKS_PASSED=${CHECKS_PASSED:-0}
-          CHECKS_FAILED=${CHECKS_FAILED:-0}
-          ITERATIONS=${ITERATIONS:-0}
-          VUS=${VUS:-0}
-          
-          # Values are already in the right format from K6 output
-          # P95, P90, AVG are in milliseconds without unit (e.g., "24.17")
-          # FAIL_RATE is a decimal (e.g., "0.00" for 0%)
-          # DURATION is in seconds (e.g., "1.07")
-          
-          # Format to 2 decimal places
-          P95_MS=$(printf "%.2f" "$P95" 2>/dev/null || echo "0.00")
-          P90_MS=$(printf "%.2f" "$P90" 2>/dev/null || echo "0.00")
-          AVG_MS=$(printf "%.2f" "$AVG" 2>/dev/null || echo "0.00")
-          
-          # FAIL_RATE from K6 is already 0-1 range, multiply by 100 for percentage
-          if [ -n "$FAIL_RATE" ] && [ "$FAIL_RATE" != "0" ] && [ "$FAIL_RATE" != "0.00" ]; then
-            FAIL_RATE_PCT=$(echo "scale=2; $FAIL_RATE * 100" | bc -l 2>/dev/null || echo "0.00")
-          else
-            FAIL_RATE_PCT="0.00"
+          if [ ! -f "$AGGREGATED_JSON" ]; then
+            echo "❌ Aggregated results not found"
+            exit 1
           fi
           
-          # DURATION is already in seconds from K6
-          DURATION_S=$(printf "%.2f" "$DURATION" 2>/dev/null || echo "0.00")
+          # Start building markdown output
+          OUTPUT="## 🚀 Performance Test Results"
+          OUTPUT+="\n"
           
-          # Set outputs
-          echo "p95=${P95_MS}" >> $GITHUB_OUTPUT
-          echo "p90=${P90_MS}" >> $GITHUB_OUTPUT
-          echo "avg=${AVG_MS}" >> $GITHUB_OUTPUT
-          echo "fail_rate=${FAIL_RATE_PCT}" >> $GITHUB_OUTPUT
-          echo "total_requests=${TOTAL_REQUESTS}" >> $GITHUB_OUTPUT
-          echo "checks_passed=${CHECKS_PASSED}" >> $GITHUB_OUTPUT
-          echo "checks_failed=${CHECKS_FAILED}" >> $GITHUB_OUTPUT
-          echo "iterations=${ITERATIONS}" >> $GITHUB_OUTPUT
-          echo "vus=${VUS}" >> $GITHUB_OUTPUT
-          echo "duration=${DURATION_S}" >> $GITHUB_OUTPUT
+          # Get all test names
+          TEST_NAMES=$(jq -r 'keys[]' "$AGGREGATED_JSON")
           
-          echo "📊 Performance Test Metrics:"
-          echo "  - P95 Latency: ${P95_MS}ms"
-          echo "  - P90 Latency: ${P90_MS}ms"
-          echo "  - Avg Latency: ${AVG_MS}ms"
-          echo "  - Failure Rate: ${FAIL_RATE_PCT}%"
-          echo "  - Total Requests: ${TOTAL_REQUESTS}"
-          echo "  - Checks Passed: ${CHECKS_PASSED}"
-          echo "  - Checks Failed: ${CHECKS_FAILED}"
+          for test_name in $TEST_NAMES; do
+            OUTPUT+="\n### ${test_name}"
+            OUTPUT+="\n"
+            
+            # Extract metrics for this test (K6 summary JSON structure)
+            P95=$(jq -r ".\"${test_name}\".metrics.http_req_duration.\"p(95)\" // 0" "$AGGREGATED_JSON")
+            P90=$(jq -r ".\"${test_name}\".metrics.http_req_duration.\"p(90)\" // 0" "$AGGREGATED_JSON")
+            AVG=$(jq -r ".\"${test_name}\".metrics.http_req_duration.avg // 0" "$AGGREGATED_JSON")
+            FAIL_RATE=$(jq -r ".\"${test_name}\".metrics.http_req_failed.value // 0" "$AGGREGATED_JSON")
+            
+            # Extract check info (with defaults for null)
+            CHECKS_PASSED=$(jq -r ".\"${test_name}\".metrics.checks.passes // 0" "$AGGREGATED_JSON")
+            CHECKS_FAILED=$(jq -r ".\"${test_name}\".metrics.checks.fails // 0" "$AGGREGATED_JSON")
+            TOTAL_REQUESTS=$(jq -r ".\"${test_name}\".metrics.http_reqs.count // 0" "$AGGREGATED_JSON")
+            
+            # Handle null values
+            [ "$CHECKS_PASSED" = "null" ] && CHECKS_PASSED="0"
+            [ "$CHECKS_FAILED" = "null" ] && CHECKS_FAILED="0"
+            [ "$TOTAL_REQUESTS" = "null" ] && TOTAL_REQUESTS="0"
+            
+            # Check thresholds (handle both object and boolean formats)
+            P95_THRESHOLD=$(jq -r "if .\"${test_name}\".metrics.http_req_duration.thresholds then (.\"${test_name}\".metrics.http_req_duration.thresholds.\"p(95)<500\" | if type == \"object\" then .ok else . end) else true end" "$AGGREGATED_JSON")
+            FAIL_THRESHOLD=$(jq -r "if .\"${test_name}\".metrics.http_req_failed.thresholds then (.\"${test_name}\".metrics.http_req_failed.thresholds.\"rate<0.001\" | if type == \"object\" then .ok else . end) else true end" "$AGGREGATED_JSON")
+            
+            # Format numbers (handle null/empty values)
+            if [ "$P95" != "null" ] && [ -n "$P95" ]; then
+              P95=$(printf "%.2f" "$P95" 2>/dev/null || echo "N/A")
+            else
+              P95="N/A"
+            fi
+            
+            if [ "$P90" != "null" ] && [ -n "$P90" ]; then
+              P90=$(printf "%.2f" "$P90" 2>/dev/null || echo "N/A")
+            else
+              P90="N/A"
+            fi
+            
+            if [ "$AVG" != "null" ] && [ -n "$AVG" ]; then
+              AVG=$(printf "%.2f" "$AVG" 2>/dev/null || echo "N/A")
+            else
+              AVG="N/A"
+            fi
+            
+            # FAIL_RATE from K6 summary is 0-1 range, multiply by 100 for percentage
+            if [ "$FAIL_RATE" != "null" ] && [ -n "$FAIL_RATE" ]; then
+              FAIL_RATE_PCT=$(echo "scale=2; $FAIL_RATE * 100" | bc -l 2>/dev/null || echo "0.00")
+            else
+              FAIL_RATE_PCT="N/A"
+            fi
+            
+            # Determine status icons
+            P95_STATUS="✅"
+            [ "$P95_THRESHOLD" = "false" ] && P95_STATUS="❌"
+            
+            FAIL_STATUS="✅"
+            [ "$FAIL_THRESHOLD" = "false" ] && FAIL_STATUS="❌"
+            
+            # Build table
+            OUTPUT+="\n| Metric | Value | Status |"
+            OUTPUT+="\n|--------|-------|--------|"
+            OUTPUT+="\n| **95th Percentile Latency** | ${P95}ms | ${P95_STATUS} |"
+            OUTPUT+="\n| **90th Percentile Latency** | ${P90}ms | - |"
+            OUTPUT+="\n| **Average Latency** | ${AVG}ms | - |"
+            OUTPUT+="\n| **Failure Rate** | ${FAIL_RATE_PCT}% | ${FAIL_STATUS} |"
+            OUTPUT+="\n"
+            OUTPUT+="\n**Summary:** ${TOTAL_REQUESTS} requests, ${CHECKS_PASSED} checks passed, ${CHECKS_FAILED} checks failed"
+            OUTPUT+="\n"
+            OUTPUT+="\n---"
+            OUTPUT+="\n"
+          done
+          
+          # Save to output
+          echo "results<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$OUTPUT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          echo "✅ Formatted results for $(echo "$TEST_NAMES" | wc -l) test(s)"
 
   update-pr-with-results:
     needs: [performance-test]
     uses: ./.github/workflows/reusable-update-pr-description.yml
     with:
-      content: |
-        ## 🚀 Performance Test Results
-        
-        ### Key Metrics
-        
-        | Metric | Value | Status |
-        |--------|-------|--------|
-        | **95th Percentile Latency** | ${{ needs.performance-test.outputs.p95 }}ms | ${{ needs.performance-test.outputs.p95 < 500 && '✅ Pass' || '❌ Fail' }} |
-        | **90th Percentile Latency** | ${{ needs.performance-test.outputs.p90 }}ms | - |
-        | **Average Latency** | ${{ needs.performance-test.outputs.avg }}ms | - |
-        | **Failure Rate** | ${{ needs.performance-test.outputs.fail_rate }}% | ${{ needs.performance-test.outputs.fail_rate < 0.1 && '✅ Pass' || '❌ Fail' }} |
-        
-        ### Test Summary
-        
-        - **Total Requests**: ${{ needs.performance-test.outputs.total_requests }}
-        - **Checks Passed**: ${{ needs.performance-test.outputs.checks_passed }}
-        - **Checks Failed**: ${{ needs.performance-test.outputs.checks_failed }}
-        - **Iterations**: ${{ needs.performance-test.outputs.iterations }}
-        - **Virtual Users**: ${{ needs.performance-test.outputs.vus }}
-        - **Avg Iteration Duration**: ${{ needs.performance-test.outputs.duration }}s
-        
-        <details>
-        <summary>Threshold Status</summary>
-        
-        - ✅ `http_req_duration p(95) < 500ms`: **${{ needs.performance-test.outputs.p95 }}ms**
-        - ✅ `http_req_failed rate < 0.1%`: **${{ needs.performance-test.outputs.fail_rate }}%**
-        
-        </details>
+      content: ${{ needs.performance-test.outputs.formatted_results }}
       section_id: PERF_RESULTS
       body_update_action: section
