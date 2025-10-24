@@ -130,9 +130,36 @@ jobs:
             [ "$CHECKS_FAILED" = "null" ] && CHECKS_FAILED="0"
             [ "$TOTAL_REQUESTS" = "null" ] && TOTAL_REQUESTS="0"
             
-            # Check thresholds (check if ANY threshold failed, not specific values)
-            P95_THRESHOLD=$(jq -r "if .\"${test_name}\".metrics.http_req_duration.thresholds then ([.\"${test_name}\".metrics.http_req_duration.thresholds[] | if type == \"object\" then .ok else . end] | all) else true end" "$AGGREGATED_JSON")
-            FAIL_THRESHOLD=$(jq -r "if .\"${test_name}\".metrics.http_req_failed.thresholds then ([.\"${test_name}\".metrics.http_req_failed.thresholds[] | if type == \"object\" then .ok else . end] | all) else true end" "$AGGREGATED_JSON")
+            # Manually evaluate thresholds by comparing actual values
+            # Extract threshold definitions (e.g., "p(95)<500" or "rate<0.001")
+            P95_THRESHOLD_DEF=$(jq -r ".\"${test_name}\".metrics.http_req_duration.thresholds | keys[0] // \"\"" "$AGGREGATED_JSON")
+            FAIL_THRESHOLD_DEF=$(jq -r ".\"${test_name}\".metrics.http_req_failed.thresholds | keys[0] // \"\"" "$AGGREGATED_JSON")
+            
+            # Default to pass
+            P95_THRESHOLD="true"
+            FAIL_THRESHOLD="true"
+            
+            # Check http_req_duration threshold (extract number and compare)
+            if [ -n "$P95_THRESHOLD_DEF" ] && [ "$P95" != "N/A" ]; then
+              THRESHOLD_VAL=$(echo "$P95_THRESHOLD_DEF" | grep -oP '<\K[0-9.]+' || echo "")
+              if [ -n "$THRESHOLD_VAL" ]; then
+                # Use bc for float comparison
+                if [ "$(echo "$P95 >= $THRESHOLD_VAL" | bc -l 2>/dev/null || echo 0)" = "1" ]; then
+                  P95_THRESHOLD="false"
+                fi
+              fi
+            fi
+            
+            # Check http_req_failed threshold (extract number and compare)
+            if [ -n "$FAIL_THRESHOLD_DEF" ] && [ "$FAIL_RATE" != "null" ]; then
+              FAIL_THRESHOLD_VAL=$(echo "$FAIL_THRESHOLD_DEF" | grep -oP '<\K[0-9.]+' || echo "")
+              if [ -n "$FAIL_THRESHOLD_VAL" ]; then
+                # Use bc for float comparison
+                if [ "$(echo "$FAIL_RATE >= $FAIL_THRESHOLD_VAL" | bc -l 2>/dev/null || echo 0)" = "1" ]; then
+                  FAIL_THRESHOLD="false"
+                fi
+              fi
+            fi
             
             # Format numbers (handle null/empty values)
             if [ "$P95" != "null" ] && [ -n "$P95" ]; then
