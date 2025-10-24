@@ -22,11 +22,22 @@ jobs:
           POSTGRES_DB: personal_coach_test
         options: >-
           --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          --health-interval 7s
+          --health-timeout 3s
+          --health-retries 3
         ports:
           - 5432:5432
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 7s
+          --health-timeout 3s
+          --health-retries 3
+        ports:
+          - 6379:6379
+
     env: 
       RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
       RAILS_ENV: test
@@ -119,9 +130,9 @@ jobs:
             [ "$CHECKS_FAILED" = "null" ] && CHECKS_FAILED="0"
             [ "$TOTAL_REQUESTS" = "null" ] && TOTAL_REQUESTS="0"
             
-            # Check thresholds (handle both object and boolean formats)
-            P95_THRESHOLD=$(jq -r "if .\"${test_name}\".metrics.http_req_duration.thresholds then (.\"${test_name}\".metrics.http_req_duration.thresholds.\"p(95)<500\" | if type == \"object\" then .ok else . end) else true end" "$AGGREGATED_JSON")
-            FAIL_THRESHOLD=$(jq -r "if .\"${test_name}\".metrics.http_req_failed.thresholds then (.\"${test_name}\".metrics.http_req_failed.thresholds.\"rate<0.001\" | if type == \"object\" then .ok else . end) else true end" "$AGGREGATED_JSON")
+            # Check thresholds (check if ANY threshold failed, not specific values)
+            P95_THRESHOLD=$(jq -r "if .\"${test_name}\".metrics.http_req_duration.thresholds then ([.\"${test_name}\".metrics.http_req_duration.thresholds[] | if type == \"object\" then .ok else . end] | all) else true end" "$AGGREGATED_JSON")
+            FAIL_THRESHOLD=$(jq -r "if .\"${test_name}\".metrics.http_req_failed.thresholds then ([.\"${test_name}\".metrics.http_req_failed.thresholds[] | if type == \"object\" then .ok else . end] | all) else true end" "$AGGREGATED_JSON")
             
             # Format numbers (handle null/empty values)
             if [ "$P95" != "null" ] && [ -n "$P95" ]; then
