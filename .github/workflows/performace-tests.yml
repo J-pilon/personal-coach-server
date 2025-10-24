@@ -99,7 +99,8 @@ jobs:
           TEST_NAMES=$(jq -r 'keys[]' "$AGGREGATED_JSON")
           
           for test_name in $TEST_NAMES; do
-            OUTPUT+="\n### ${test_name}"
+            test_display_name=$(echo "${test_name//_/ }" | tr '[:lower:]' '[:upper:]' | sed 's/\([A-Z]\)/\L\1/g' | sed 's/^\(.\)/\U\1/g' | sed 's/ \([a-z]\)/\ \U\1/g')
+            OUTPUT+="\n### ${test_display_name}"
             OUTPUT+="\n"
             
             # Extract metrics for this test (K6 summary JSON structure)
