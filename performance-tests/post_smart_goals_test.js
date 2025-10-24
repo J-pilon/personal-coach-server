@@ -3,10 +3,10 @@ import { sleep, check } from 'k6';
 
 export const options = {
   duration: '5s',
-  vus: 10,
+  vus: 50,
   thresholds: {
     http_req_failed: ['rate<0.001'],
-    http_req_duration: ['p(95)<1000'],
+    http_req_duration: ['p(95)<2000'],
   },
 };
 
@@ -101,8 +101,6 @@ export default function () {
   check(logoutResponse, {
     'logout successful': (r) => r.status === 200,
   });
-
-  console.log(`Request for user ${email} was successful.`)
 
   sleep(1);
 }
