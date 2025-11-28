@@ -160,27 +160,6 @@ RSpec.describe 'Api::V1::AiController', type: :request do
     end
   end
 
-  describe 'POST /api/v1/ai' do
-    # Test the original endpoint still works
-    let(:valid_params) { { input: 'Create a SMART goal for learning React Native' } }
-
-    it 'processes AI request successfully' do
-      # Mock the job to return a job ID
-      job = instance_double(ActiveJob::Base)
-      allow(job).to receive(:provider_job_id).and_return('job-123')
-      allow(AiServiceJob).to receive(:perform_later).and_return(job)
-
-      post '/api/v1/ai', params: valid_params
-
-      expect(response).to have_http_status(:ok)
-      json_response = response.parsed_body
-      expect(json_response).to include('message', 'job_id', 'status')
-      expect(json_response['message']).to eq('AI request queued for processing')
-      expect(json_response['status']).to eq('queued')
-      expect(json_response['job_id']).to eq('job-123')
-    end
-  end
-
   describe 'POST /api/v1/ai/suggested_tasks' do
     let(:valid_params) { { profile_id: profile.id } }
 

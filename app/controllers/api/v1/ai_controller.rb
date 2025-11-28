@@ -5,30 +5,6 @@ module Api
     class AiController < ApplicationController
       before_action :authenticate_api_v1_user!
 
-      def create
-        input = params[:input]
-
-        if input.blank?
-          render json: { error: 'Input is required' }, status: :bad_request
-          return
-        end
-
-        job = AiServiceJob.perform_later(
-          profile_id: current_api_v1_profile.id,
-          input: input,
-          intent: 'smart_goal'
-        )
-
-        render json: {
-          message: 'AI request queued for processing',
-          job_id: job.provider_job_id,
-          status: 'queued'
-        }
-      rescue StandardError => e
-        Rails.logger.error "AI Controller error: #{e.message}"
-        render json: { error: 'An unexpected error occurred' }, status: :internal_server_error
-      end
-
       def proxy
         input = params[:input]
         timeframe = params[:timeframe]
