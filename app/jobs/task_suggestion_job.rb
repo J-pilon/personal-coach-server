@@ -15,7 +15,12 @@ class TaskSuggestionJob < AiProcessingJob
   private
 
   def process_with_status_update
-    result = process_task_suggestions
+    suggestions = process_task_suggestions
+
+    result = {
+      intent: 'task_suggestions',
+      response: suggestions
+    }
 
     store(status: 'complete', progress: 100, result: result.to_json)
 

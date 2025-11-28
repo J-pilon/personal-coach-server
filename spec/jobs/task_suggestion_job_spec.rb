@@ -42,7 +42,7 @@ RSpec.describe TaskSuggestionJob, type: :job do
           request_id: ai_request.id
         )
 
-        expect(result).to eq(mock_suggestions)
+        expect(result).to eq({ intent: 'task_suggestions', response: mock_suggestions })
         expect(ai_request.reload.status).to eq('completed')
       end
 

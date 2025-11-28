@@ -59,3 +59,7 @@ bundle exec rubocop
 
 ### Deployment instructions
 TBD
+
+### Running server locally
+To allow for the client-side app to make requests to the rails server you need to bind it to all network interfaces, by running this command:
+```bin/rails server -b 0.0.0.0```
