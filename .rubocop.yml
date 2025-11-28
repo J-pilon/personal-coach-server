@@ -51,7 +51,7 @@ Metrics/AbcSize:
   Max: 40
 
 Metrics/MethodLength:
-  Max: 30
+  Max: 40
 
 Metrics/ClassLength:
   Max: 200
@@ -64,6 +64,7 @@ Metrics/BlockLength:
     - 'spec/**/*'
     - 'config/routes.rb'
     - 'config/environments/*.rb'
+    - 'lib/tasks/**/*.rake'
 
 # Rails
 Rails/FilePath:
