@@ -7,6 +7,9 @@ class Profile < ApplicationRecord
   has_many :tasks, dependent: :destroy
   has_many :ai_requests, dependent: :destroy
   has_many :tickets, dependent: :destroy
+  has_many :notifications, dependent: :destroy
+  has_many :device_tokens, dependent: :destroy
+  has_one :notification_preference, dependent: :destroy
 
   validates :onboarding_status, inclusion: { in: %w[incomplete complete] }
 
