@@ -96,6 +96,7 @@ RSpec/NestedGroups:
 RSpec/DescribeClass:
   Exclude:
     - 'spec/features/**/*'
+    - 'spec/integration/**/*'
     - 'spec/requests/**/*'
     - 'spec/system/**/*'
 
