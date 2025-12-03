@@ -100,3 +100,5 @@ package-lock.json
 # Ignore performance test results
 /performance-tests/results/
 summary.json
+
+personal.txt
