@@ -101,4 +101,5 @@ package-lock.json
 /performance-tests/results/
 summary.json
 
+# For private project specific information
 personal.txt

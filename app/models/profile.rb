@@ -7,8 +7,17 @@ class Profile < ApplicationRecord
   has_many :tasks, dependent: :destroy
   has_many :ai_requests, dependent: :destroy
   has_many :tickets, dependent: :destroy
+  has_many :notifications, dependent: :destroy
+  has_many :device_tokens, dependent: :destroy
+  has_one :notification_preference, dependent: :destroy
 
   validates :onboarding_status, inclusion: { in: %w[incomplete complete] }
+
+  after_create :create_notification_preference
+
+  delegate :push_enabled?, :email_enabled?, :sms_enabled?,
+           :timezone, :preferred_time, :in_quiet_hours?,
+           :last_opened_app_at, to: :notification_preference, allow_nil: true
 
   def incomplete_tasks
     tasks.where(completed: false)
@@ -35,5 +44,27 @@ class Profile < ApplicationRecord
 
   def full_name
     [first_name, last_name].compact.join(' ')
+  end
+
+  def active_device_tokens
+    device_tokens.active
+  end
+
+  def push_tokens
+    device_tokens.active.push_capable
+  end
+
+  def push_notifications_enabled?
+    notification_preference&.push_enabled? && push_tokens.exists?
+  end
+
+  def record_app_open!
+    notification_preference&.update!(last_opened_app_at: Time.current)
+  end
+
+  private
+
+  def create_notification_preference
+    build_notification_preference.save!
   end
 end
