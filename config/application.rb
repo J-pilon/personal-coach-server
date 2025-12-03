@@ -27,6 +27,7 @@ module Server
     # Enable sessions for Devise JWT authentication
     config.session_store :cookie_store, key: '_personal_coach_session'
     config.middleware.use ActionDispatch::Cookies
+    config.middleware.use ActionDispatch::Session::CookieStore
 
     # Only loads a smaller set of middleware suitable for API only apps.
     # Middleware like session, flash, cookies can be added back manually.
