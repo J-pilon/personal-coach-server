@@ -3,9 +3,9 @@
 require 'rails_helper'
 
 RSpec.describe Notifications::EngagementReminderService do
-  let(:profile) { create(:profile) }
-
   subject(:service) { described_class.new(profile) }
+
+  let(:profile) { create(:profile) }
 
   describe '#notification_type' do
     it 'returns engagement_reminder' do

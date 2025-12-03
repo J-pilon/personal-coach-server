@@ -8,7 +8,7 @@ class Notifications::EngagementReminderJob < ApplicationJob
   def perform(profile_id)
     profile = Profile.find(profile_id)
     Notifications::EngagementReminderService.new(profile).call
-  rescue ActiveRecord::RecordNotFound => e
+  rescue ActiveRecord::RecordNotFound
     Rails.logger.warn("EngagementReminderJob: Profile not found: #{profile_id}")
   end
 end

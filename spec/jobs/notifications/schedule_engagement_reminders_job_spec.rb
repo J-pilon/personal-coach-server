@@ -43,10 +43,11 @@ RSpec.describe Notifications::ScheduleEngagementRemindersJob, type: :job do
           last_opened_app_at: 1.day.ago
         )
         create(:device_token, profile: profile, active: true)
-
-        expect(Notifications::EngagementReminderService).not_to receive(:new)
+        allow(Notifications::EngagementReminderService).to receive(:new)
 
         described_class.perform_now
+
+        expect(Notifications::EngagementReminderService).not_to have_received(:new)
       end
     end
 
@@ -58,10 +59,11 @@ RSpec.describe Notifications::ScheduleEngagementRemindersJob, type: :job do
           last_opened_app_at: 4.days.ago
         )
         create(:device_token, profile: profile, active: true)
-
-        expect(Notifications::EngagementReminderService).not_to receive(:new)
+        allow(Notifications::EngagementReminderService).to receive(:new)
 
         described_class.perform_now
+
+        expect(Notifications::EngagementReminderService).not_to have_received(:new)
       end
     end
 
@@ -73,10 +75,11 @@ RSpec.describe Notifications::ScheduleEngagementRemindersJob, type: :job do
           last_opened_app_at: 4.days.ago
         )
         create(:device_token, profile: profile, active: false)
-
-        expect(Notifications::EngagementReminderService).not_to receive(:new)
+        allow(Notifications::EngagementReminderService).to receive(:new)
 
         described_class.perform_now
+
+        expect(Notifications::EngagementReminderService).not_to have_received(:new)
       end
     end
 
@@ -103,33 +106,22 @@ RSpec.describe Notifications::ScheduleEngagementRemindersJob, type: :job do
     end
 
     context 'with multiple eligible profiles' do
+      let!(:profile1) { create(:profile).tap { |p| setup_eligible_profile(p, 5.days.ago) } }
+      let!(:profile2) { create(:profile).tap { |p| setup_eligible_profile(p, 10.days.ago) } }
+      let(:mock_service1) { instance_double(Notifications::EngagementReminderService, call: nil) }
+      let(:mock_service2) { instance_double(Notifications::EngagementReminderService, call: nil) }
+
+      def setup_eligible_profile(profile, last_opened)
+        profile.notification_preference.update!(push_enabled: true, last_opened_app_at: last_opened)
+        create(:device_token, profile: profile, active: true)
+      end
+
+      before do
+        allow(Notifications::EngagementReminderService).to receive(:new).with(profile1).and_return(mock_service1)
+        allow(Notifications::EngagementReminderService).to receive(:new).with(profile2).and_return(mock_service2)
+      end
+
       it 'calls EngagementReminderService for all matching profiles' do
-        profile1 = create(:profile)
-        profile1.notification_preference.update!(
-          push_enabled: true,
-          last_opened_app_at: 5.days.ago
-        )
-        create(:device_token, profile: profile1, active: true)
-
-        profile2 = create(:profile)
-        profile2.notification_preference.update!(
-          push_enabled: true,
-          last_opened_app_at: 10.days.ago
-        )
-        create(:device_token, profile: profile2, active: true)
-
-        mock_service1 = instance_double(Notifications::EngagementReminderService)
-        mock_service2 = instance_double(Notifications::EngagementReminderService)
-
-        allow(Notifications::EngagementReminderService).to receive(:new)
-          .with(profile1)
-          .and_return(mock_service1)
-        allow(Notifications::EngagementReminderService).to receive(:new)
-          .with(profile2)
-          .and_return(mock_service2)
-        allow(mock_service1).to receive(:call)
-        allow(mock_service2).to receive(:call)
-
         described_class.perform_now
 
         expect(mock_service1).to have_received(:call)
