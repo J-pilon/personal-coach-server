@@ -4,7 +4,7 @@ module Notifications
   class BaseService
     def initialize(profile, channels: nil)
       @profile = profile
-      @preference = profile.notification_perference
+      @preference = profile.notification_preference
       @channels = channels || default_channels
     end
 

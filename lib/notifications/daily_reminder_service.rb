@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Notifications
-  class DailyReminderService
+  class DailyReminderService < BaseService
     def notification_type
       'daily_reminder'
     end

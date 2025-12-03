@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Notifications
-  class EngagementReminderService
+  class EngagementReminderService < BaseService
     DAYS_THRESHOLD = 3
 
     def should_send?
