@@ -35,6 +35,7 @@ Rails.application.routes.draw do
 
       # Job status endpoint
       get 'jobs/:id', to: 'job_status#show'
+      resources :device_tokens, only: %i[create destroy]
     end
   end
 end
