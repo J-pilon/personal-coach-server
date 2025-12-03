@@ -83,6 +83,6 @@ class Profile < ApplicationRecord
   private
 
   def create_notification_preference
-    build_notification_preference.save!
+    build_notification_preference(timezone: 'UTC').save!
   end
 end
