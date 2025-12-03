@@ -11,6 +11,24 @@ class Profile < ApplicationRecord
   has_many :device_tokens, dependent: :destroy
   has_one :notification_preference, dependent: :destroy
 
+  # Notification scopes
+  scope :with_push_enabled, lambda {
+    joins(:notification_preference).where(notification_preferences: { push_enabled: true })
+  }
+  scope :with_active_devices, lambda {
+    joins(:device_tokens).where(device_tokens: { active: true })
+  }
+  scope :push_notification_eligible, lambda {
+    with_push_enabled.with_active_devices.distinct
+  }
+  scope :inactive_for_days, lambda { |days|
+    joins(:notification_preference).where(
+      'notification_preferences.last_opened_app_at IS NULL OR ' \
+      'notification_preferences.last_opened_app_at < ?',
+      days.days.ago
+    )
+  }
+
   validates :onboarding_status, inclusion: { in: %w[incomplete complete] }
 
   after_create :create_notification_preference
