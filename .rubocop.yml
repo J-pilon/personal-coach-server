@@ -65,6 +65,8 @@ Metrics/BlockLength:
     - 'config/routes.rb'
     - 'config/environments/*.rb'
     - 'lib/tasks/**/*.rake'
+    - 'db/**/*'
+    - 'db/schema.rb'
 
 # Rails
 Rails/FilePath:
