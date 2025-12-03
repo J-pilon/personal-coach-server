@@ -83,7 +83,7 @@ RSpec.describe 'Notification flow integration' do
 
       context 'when device token is inactive' do
         before do
-          profile.device_tokens.update_all(active: false)
+          profile.device_tokens.each { |device_token| device_token.update!(active: false) }
         end
 
         it 'does not enqueue DailyReminderJob' do
