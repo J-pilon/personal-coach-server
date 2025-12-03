@@ -394,6 +394,7 @@ DEPENDENCIES
   erb_lint (~> 0.9.0)
   factory_bot_rails
   faker
+  faraday
   jsonapi-serializer
   pg (~> 1.5)
   puma (>= 5.0)
