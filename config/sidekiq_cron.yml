@@ -1,0 +1,13 @@
+schedule_daily_reminders:
+  cron: "0 * * * *"
+  class: "Notifications::ScheduleDailyRemindersJob"
+  queue: critical
+  active_job: true
+  description: "Schedule daily reminder notifications based on user timezone preferences"
+
+schedule_engagement_reminders:
+  cron: "0 14 * * *"
+  class: "Notifications::ScheduleEngagementRemindersJob"
+  queue: critical
+  active_job: true
+  description: "Send engagement reminders to users inactive for 3+ days"

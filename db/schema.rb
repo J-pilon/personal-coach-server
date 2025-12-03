@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_12_02_213916) do
+ActiveRecord::Schema[7.2].define(version: 2025_12_03_044428) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -77,7 +77,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_02_213916) do
     t.text "error_message"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "device_token_id"
     t.index ["channel"], name: "index_notifications_on_channel"
+    t.index ["device_token_id"], name: "index_notifications_on_device_token_id"
     t.index ["notification_type"], name: "index_notifications_on_notification_type"
     t.index ["profile_id"], name: "index_notifications_on_profile_id"
     t.index ["scheduled_for"], name: "index_notifications_on_scheduled_for"
@@ -161,6 +163,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_02_213916) do
   add_foreign_key "ai_requests", "profiles"
   add_foreign_key "device_tokens", "profiles"
   add_foreign_key "notification_preferences", "profiles"
+  add_foreign_key "notifications", "device_tokens"
   add_foreign_key "notifications", "profiles"
   add_foreign_key "profiles", "users"
   add_foreign_key "smart_goals", "profiles"

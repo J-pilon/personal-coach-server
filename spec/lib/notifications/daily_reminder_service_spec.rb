@@ -3,7 +3,9 @@
 require 'rails_helper'
 
 RSpec.describe Notifications::DailyReminderService do
-  subject(:service) { described_class.new }
+  subject(:service) { described_class.new(profile) }
+
+  let(:profile) { create(:profile) }
 
   describe '#notification_type' do
     it 'returns daily_reminder' do

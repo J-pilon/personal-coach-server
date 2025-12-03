@@ -3,7 +3,9 @@
 require 'rails_helper'
 
 RSpec.describe Notifications::EngagementReminderService do
-  subject(:service) { described_class.new }
+  subject(:service) { described_class.new(profile) }
+
+  let(:profile) { create(:profile) }
 
   describe '#notification_type' do
     it 'returns engagement_reminder' do
@@ -27,11 +29,8 @@ RSpec.describe Notifications::EngagementReminderService do
   end
 
   describe '#notification_body' do
-    let(:profile) { create(:profile) }
-
     before do
       profile.notification_preference.update!(last_opened_app_at: 5.days.ago)
-      service.instance_variable_set(:@profile, profile)
     end
 
     it 'includes days since last open' do
@@ -46,12 +45,6 @@ RSpec.describe Notifications::EngagementReminderService do
   end
 
   describe '#days_since_last_open' do
-    let(:profile) { create(:profile) }
-
-    before do
-      service.instance_variable_set(:@profile, profile)
-    end
-
     context 'when user has opened the app recently' do
       before { profile.notification_preference.update!(last_opened_app_at: 2.days.ago) }
 

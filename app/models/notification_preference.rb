@@ -17,6 +17,17 @@ class NotificationPreference < ApplicationRecord
     sms_enabled
   end
 
+  # Check if a specific channel is enabled for a notification type
+  # Supports future granular per-type settings via channel_settings JSON column
+  def channel_enabled?(_notification_type, channel)
+    case channel.to_sym
+    when :push then push_enabled?
+    when :email then email_enabled?
+    when :sms then sms_enabled?
+    else false
+    end
+  end
+
   def in_quiet_hours?(time = Time.current)
     return false unless quiet_hours_start && quiet_hours_end
 
