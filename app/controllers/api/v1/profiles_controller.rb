@@ -39,7 +39,7 @@ module Api
       def profile_params
         params.require(:profile).permit(
           :first_name, :last_name, :work_role, :education,
-          :desires, :limiting_beliefs, :onboarding_status
+          :desires, :limiting_beliefs, :onboarding_status, :timezone
         )
       end
     end

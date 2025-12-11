@@ -28,13 +28,13 @@ module Api
       def notification_preference_response
         {
           notification_preference: current_notification_preference.as_json(
-            only: %i[push_enabled preferred_time timezone]
+            only: %i[push_enabled preferred_time]
           )
         }
       end
 
       def notification_preference_params
-        params.require(:notification_preference).permit(:push_enabled, :preferred_time, :timezone)
+        params.require(:notification_preference).permit(:push_enabled, :preferred_time)
       end
     end
   end

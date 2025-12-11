@@ -21,7 +21,7 @@ class Notifications::ScheduleDailyRemindersJob < ApplicationJob
 
   def notification_time_matches?(profile)
     pref = profile.notification_preference
-    tz = ActiveSupport::TimeZone[pref.timezone]
+    tz = ActiveSupport::TimeZone[profile.timezone]
     local_hour = Time.current.in_time_zone(tz).hour
 
     pref.preferred_time.hour == local_hour
