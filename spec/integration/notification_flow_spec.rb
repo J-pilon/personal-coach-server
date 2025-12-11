@@ -9,10 +9,10 @@ RSpec.describe 'Notification flow integration' do
   let(:profile) { user.profile }
 
   before do
-    # Ensure notification preference exists and is properly configured
+    # Ensure profile has timezone set and notification preference is properly configured
+    profile.update!(timezone: 'UTC')
     profile.notification_preference.update!(
       push_enabled: true,
-      timezone: 'UTC',
       preferred_time: Time.current.in_time_zone('UTC').beginning_of_hour
     )
 

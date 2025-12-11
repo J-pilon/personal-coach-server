@@ -16,6 +16,15 @@ RSpec.describe Profile, type: :model do
 
   describe 'validations' do
     it { is_expected.to validate_inclusion_of(:onboarding_status).in_array(%w[incomplete complete]) }
+
+    it 'validates timezone inclusion' do
+      expect(subject).to validate_inclusion_of(:timezone).in_array(
+        %w[Pacific/Honolulu America/Anchorage America/Los_Angeles America/Denver America/Chicago America/New_York
+           America/Halifax America/Sao_Paulo Atlantic/Reykjavik Europe/London Europe/Paris Europe/Berlin Europe/Moscow
+           Asia/Dubai Asia/Kolkata Asia/Bangkok Asia/Singapore Asia/Hong_Kong Asia/Tokyo Australia/Sydney
+           Pacific/Auckland UTC]
+      )
+    end
   end
 
   describe 'callbacks' do

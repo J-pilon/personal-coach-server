@@ -9,6 +9,7 @@ FactoryBot.define do
     education { Faker::Educator.degree }
     desires { Faker::Lorem.paragraph(sentence_count: 2) }
     limiting_beliefs { Faker::Lorem.paragraph(sentence_count: 1) }
+    timezone { 'UTC' }
     onboarding_status { 'incomplete' }
 
     trait :completed_onboarding do
