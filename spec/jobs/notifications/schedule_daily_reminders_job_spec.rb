@@ -13,10 +13,9 @@ RSpec.describe Notifications::ScheduleDailyRemindersJob, type: :job do
     context 'when profile is eligible and time matches' do
       it 'enqueues DailyReminderJob for the profile' do
         current_hour = Time.current.in_time_zone('UTC').hour
-        profile = create(:profile)
+        profile = create(:profile, timezone: 'UTC')
         profile.notification_preference.update!(
           push_enabled: true,
-          timezone: 'UTC',
           preferred_time: Time.zone.parse("#{current_hour}:00")
         )
         create(:device_token, profile: profile, active: true)
@@ -31,10 +30,9 @@ RSpec.describe Notifications::ScheduleDailyRemindersJob, type: :job do
       it 'does not enqueue DailyReminderJob' do
         current_hour = Time.current.in_time_zone('UTC').hour
         different_hour = (current_hour + 2) % 24
-        profile = create(:profile)
+        profile = create(:profile, timezone: 'UTC')
         profile.notification_preference.update!(
           push_enabled: true,
-          timezone: 'UTC',
           preferred_time: Time.zone.parse("#{different_hour}:00")
         )
         create(:device_token, profile: profile, active: true)
@@ -48,10 +46,9 @@ RSpec.describe Notifications::ScheduleDailyRemindersJob, type: :job do
     context 'when profile does not have push enabled' do
       it 'does not enqueue DailyReminderJob' do
         current_hour = Time.current.in_time_zone('UTC').hour
-        profile = create(:profile)
+        profile = create(:profile, timezone: 'UTC')
         profile.notification_preference.update!(
           push_enabled: false,
-          timezone: 'UTC',
           preferred_time: Time.zone.parse("#{current_hour}:00")
         )
         create(:device_token, profile: profile, active: true)
@@ -65,10 +62,9 @@ RSpec.describe Notifications::ScheduleDailyRemindersJob, type: :job do
     context 'when profile does not have active device tokens' do
       it 'does not enqueue DailyReminderJob' do
         current_hour = Time.current.in_time_zone('UTC').hour
-        profile = create(:profile)
+        profile = create(:profile, timezone: 'UTC')
         profile.notification_preference.update!(
           push_enabled: true,
-          timezone: 'UTC',
           preferred_time: Time.zone.parse("#{current_hour}:00")
         )
         create(:device_token, profile: profile, active: false)
@@ -83,18 +79,16 @@ RSpec.describe Notifications::ScheduleDailyRemindersJob, type: :job do
       it 'enqueues jobs for all matching profiles' do
         current_hour = Time.current.in_time_zone('UTC').hour
 
-        profile1 = create(:profile)
+        profile1 = create(:profile, timezone: 'UTC')
         profile1.notification_preference.update!(
           push_enabled: true,
-          timezone: 'UTC',
           preferred_time: Time.zone.parse("#{current_hour}:00")
         )
         create(:device_token, profile: profile1, active: true)
 
-        profile2 = create(:profile)
+        profile2 = create(:profile, timezone: 'UTC')
         profile2.notification_preference.update!(
           push_enabled: true,
-          timezone: 'UTC',
           preferred_time: Time.zone.parse("#{current_hour}:00")
         )
         create(:device_token, profile: profile2, active: true)

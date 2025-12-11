@@ -30,11 +30,17 @@ class Profile < ApplicationRecord
   }
 
   validates :onboarding_status, inclusion: { in: %w[incomplete complete] }
+  validates :timezone, inclusion: {
+    in: %w[Pacific/Honolulu America/Anchorage America/Los_Angeles America/Denver America/Chicago America/New_York
+           America/Halifax America/Sao_Paulo Atlantic/Reykjavik Europe/London Europe/Paris Europe/Berlin Europe/Moscow
+           Asia/Dubai Asia/Kolkata Asia/Bangkok Asia/Singapore Asia/Hong_Kong Asia/Tokyo Australia/Sydney
+           Pacific/Auckland UTC]
+  }
 
   after_create :create_notification_preference
 
   delegate :push_enabled?, :email_enabled?, :sms_enabled?,
-           :timezone, :preferred_time, :in_quiet_hours?,
+           :preferred_time, :in_quiet_hours?,
            :last_opened_app_at, to: :notification_preference, allow_nil: true
 
   def incomplete_tasks
@@ -83,6 +89,6 @@ class Profile < ApplicationRecord
   private
 
   def create_notification_preference
-    build_notification_preference(timezone: 'UTC').save!
+    build_notification_preference.save!
   end
 end

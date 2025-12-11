@@ -7,6 +7,5 @@ FactoryBot.define do
     email_enabled { true }
     sms_enabled { false }
     preferred_time { '09:00' }
-    timezone { 'UTC' }
   end
 end

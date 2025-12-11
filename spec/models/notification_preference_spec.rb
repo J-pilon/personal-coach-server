@@ -7,12 +7,9 @@ RSpec.describe NotificationPreference, type: :model do
     it { is_expected.to belong_to(:profile) }
   end
 
-  describe 'validations' do
-    it { is_expected.to validate_presence_of(:timezone) }
-  end
-
   describe '#in_quiet_hours?' do
-    let(:preference) { build(:notification_preference, timezone: 'UTC') }
+    let(:profile) { create(:profile, timezone: 'UTC') }
+    let(:preference) { profile.notification_preference }
 
     context 'when quiet hours are not set' do
       it 'returns false' do

@@ -40,6 +40,7 @@ Rails.application.routes.draw do
       # Job status endpoint
       get 'jobs/:id', to: 'job_status#show'
       resources :device_tokens, only: %i[create destroy]
+      resource :notification_preferences, only: %i[show update]
     end
   end
 end
