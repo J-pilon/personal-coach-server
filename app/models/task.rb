@@ -15,4 +15,16 @@ class Task < ApplicationRecord
   scope :incomplete, -> { where(completed: false) }
   scope :completed, -> { where(completed: true) }
   scope :by_priority, -> { order(priority: :desc) }
+
+  def due_today?
+    return false if due_at.nil? || profile.nil? || profile.timezone.blank?
+
+    tz = ActiveSupport::TimeZone.new(profile.timezone)
+    return false unless tz
+
+    now = Time.current.in_time_zone(tz)
+    due_date = due_at.in_time_zone(tz).to_date
+
+    now.to_date == due_date
+  end
 end
