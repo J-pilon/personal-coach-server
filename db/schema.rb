@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_12_11_194943) do
+ActiveRecord::Schema[7.2].define(version: 2025_12_12_214407) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -128,6 +128,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_11_194943) do
     t.datetime "updated_at", null: false
     t.integer "priority"
     t.bigint "smart_goal_id"
+    t.datetime "due_at"
     t.index ["profile_id"], name: "index_tasks_on_profile_id"
     t.index ["smart_goal_id"], name: "index_tasks_on_smart_goal_id"
   end
