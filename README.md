@@ -56,6 +56,29 @@ bundle exec rubocop
 
 ### Services (job queues, cache servers, search engines, etc.)
 - OpenAI API integration for AI features
+- SendGrid for transactional email (production)
+
+### Transactional Email (SendGrid)
+
+Production uses SendGrid via `sendgrid-actionmailer`. Required environment variables:
+
+| Variable | Required in | Notes |
+|---|---|---|
+| `SENDGRID_API_KEY` | production | Mail Send permission only; rotate via SendGrid UI. |
+| `MAIL_FROM_ADDRESS` | all envs (defaults provided) | Default From for all mailers. |
+| `MAIL_REPLY_TO_ADDRESS` | all envs (defaults provided) | Default Reply-To. |
+| `APP_HOST` | production | Used by `default_url_options` for links in mail. |
+
+Smoke test deliverability after deploy:
+```bash
+bundle exec rake mailers:ping[you@example.com]
+```
+
+**DNS / domain authentication (manual, one-time per env):** SPF, DKIM, and the
+custom return-path (link branding) must be configured at the DNS provider for
+the sending domain via SendGrid → Sender Authentication → Authenticate Your
+Domain. SendGrid will reject mail until DKIM verifies. This is out of scope for
+the codebase.
 
 ### Deployment instructions
 TBD
