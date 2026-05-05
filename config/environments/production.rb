@@ -70,7 +70,7 @@ Rails.application.configure do
   # Requires SENDGRID_API_KEY in the environment (set via Heroku config / Rails credentials).
   config.action_mailer.delivery_method = :sendgrid_actionmailer
   config.action_mailer.sendgrid_actionmailer_settings = {
-    api_key: ENV.fetch('SENDGRID_API_KEY', nil),
+    api_key: Rails.application.credentials.fetch(:sendgrid, :api_key),
     raise_delivery_errors: true
   }
   config.action_mailer.raise_delivery_errors = true
