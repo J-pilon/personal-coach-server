@@ -3,11 +3,9 @@
 namespace :mailers do
   desc 'Send a SendGrid deliverability ping. Usage: rake mailers:ping[recipient@example.com]'
   task :ping, [:recipient] => :environment do |_t, args|
-    recipient = args[:recipient].presence || ENV['MAIL_PING_RECIPIENT']
+    recipient = args[:recipient].presence || ENV.fetch('MAIL_PING_RECIPIENT', nil)
 
-    if recipient.blank?
-      abort 'Recipient required. Pass as arg or set MAIL_PING_RECIPIENT.'
-    end
+    abort 'Recipient required. Pass as arg or set MAIL_PING_RECIPIENT.' if recipient.blank?
 
     puts "Sending TestMailer#ping to #{recipient} via #{ActionMailer::Base.delivery_method}..."
     TestMailer.ping(recipient).deliver_now
