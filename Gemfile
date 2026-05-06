@@ -28,7 +28,7 @@ gem 'sidekiq-status'
 gem 'bcrypt', '~> 3.1.7'
 
 # Authentication
-gem 'devise'
+gem 'devise', '>= 5.0.3'
 gem 'devise-jwt'
 
 gem 'pg', '~> 1.5'
