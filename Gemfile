@@ -28,7 +28,7 @@ gem 'sidekiq-status'
 gem 'bcrypt', '~> 3.1.7'
 
 # Authentication
-gem 'devise'
+gem 'devise', '>= 5.0.3'
 gem 'devise-jwt'
 
 gem 'pg', '~> 1.5'
@@ -53,9 +53,14 @@ gem 'ruby-openai', '~> 6.0'
 
 gem 'faraday'
 
+# Transactional email (SendGrid)
+gem 'sendgrid-actionmailer', '~> 3.2'
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem 'debug', platforms: %i[mri mswin mswin64 mingw x64_mingw]
+
+  gem 'dotenv-rails', '~> 3.2'
 
   # Testing
   gem 'factory_bot_rails'

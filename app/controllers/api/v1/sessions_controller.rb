@@ -65,7 +65,7 @@ module Api
         }, status: :ok
       end
 
-      def respond_to_on_destroy
+      def respond_to_on_destroy(_resource_or_scope = nil)
         if request.headers['Authorization'].present?
           auth_header = request.headers['Authorization']
 

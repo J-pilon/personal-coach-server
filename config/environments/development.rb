@@ -33,8 +33,19 @@ Rails.application.configure do
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = :local
 
-  # Don't care if the mailer can't send.
-  config.action_mailer.raise_delivery_errors = false
+  # SendGrid (Web API) via sendgrid-actionmailer.
+  # Requires SENDGRID_API_KEY in the environment (set via Heroku config / Rails credentials).
+  config.action_mailer.delivery_method = :sendgrid_actionmailer
+  config.action_mailer.sendgrid_actionmailer_settings = {
+    api_key: Rails.application.credentials.dig(:sendgrid, :api_key),
+    raise_delivery_errors: true
+  }
+  config.action_mailer.raise_delivery_errors = true
+  config.action_mailer.perform_deliveries = true
+  config.action_mailer.default_url_options = {
+    host: ENV.fetch('APP_HOST', 'personal-coach.app'),
+    protocol: 'https'
+  }
 
   config.action_mailer.perform_caching = false
 

@@ -36,5 +36,12 @@ module Server
 
     # Configure Active Job to use Sidekiq
     config.active_job.queue_adapter = :sidekiq
+
+    # Default From / Reply-To for all transactional mail (overridable per-mailer).
+    # Sending domain SPF/DKIM/return-path must be configured separately at the DNS provider.
+    config.action_mailer.default_options = {
+      from: ENV.fetch('FROM_MAIL_ADDRESS', 'no-reply@personal-coach.app'),
+      reply_to: ENV.fetch('FROM_MAIL_ADDRESS', 'no-reply@personal-coach.app')
+    }
   end
 end
