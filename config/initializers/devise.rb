@@ -24,7 +24,7 @@ Devise.setup do |config|
   # Configure the e-mail address which will be shown in Devise::Mailer,
   # note that it will be overwritten if you use your own mailer class
   # with default "from" parameter.
-  config.mailer_sender = ENV.fetch('FROM_MAIL_ADDRESS', 'no-reply@personal-coach.app')
+  config.mailer_sender = ENV.fetch('MAIL_FROM_ADDRESS', 'no-reply@personal-coach.app')
 
   # Configure the class responsible to send e-mails.
   # config.mailer = 'Devise::Mailer'
