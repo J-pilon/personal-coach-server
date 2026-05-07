@@ -19,7 +19,8 @@ Rails.application.routes.draw do
         registration: 'signup'
       }, controllers: {
         sessions: 'api/v1/sessions',
-        registrations: 'api/v1/registrations'
+        registrations: 'api/v1/registrations',
+        passwords: 'api/v1/passwords'
       }
 
       # Authentication routes
