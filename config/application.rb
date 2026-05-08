@@ -43,5 +43,10 @@ module Server
       from: ENV.fetch('MAIL_FROM_ADDRESS', 'no-reply@personal-coach.app'),
       reply_to: ENV.fetch('MAIL_FROM_ADDRESS', 'no-reply@personal-coach.app')
     }
+
+    # Transactional flows triggered from model callbacks. Disabled in test by
+    # default so factory-driven user creation does not enqueue real jobs;
+    # specs that exercise the flow opt in explicitly.
+    config.x.welcome_email.enabled = true
   end
 end
