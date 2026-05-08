@@ -17,6 +17,7 @@ class User < ApplicationRecord
   validates :password_confirmation, presence: true, on: :create
 
   after_create :create_profile
+  after_commit :send_welcome_email, on: :create
 
   def jwt_payload
     {
@@ -35,5 +36,11 @@ class User < ApplicationRecord
 
   def create_profile
     build_profile.save!
+  end
+
+  def send_welcome_email
+    return unless Rails.configuration.x.welcome_email.enabled
+
+    UserMailer.welcome(self).deliver_later
   end
 end

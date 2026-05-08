@@ -64,4 +64,8 @@ Rails.application.configure do
 
   # Use inline job processing for tests
   config.active_job.queue_adapter = :test
+
+  # Suppress welcome-email enqueue from User#after_commit during the test
+  # suite — opt back in per-spec when verifying the welcome flow.
+  config.x.welcome_email.enabled = false
 end
