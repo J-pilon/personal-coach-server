@@ -173,6 +173,27 @@ RSpec.describe 'Api::V1::Tasks', type: :request do
         end
       end
     end
+
+    context 'when linking a task to a smart goal' do
+      let!(:smart_goal) { create(:smart_goal, profile: profile) }
+      let(:linked_task_params) do
+        {
+          task: {
+            title: 'Task linked to a goal',
+            action_category: 'do',
+            smart_goal_id: smart_goal.id
+          }
+        }
+      end
+
+      it 'persists the smart_goal_id' do
+        post api_v1_tasks_path, params: linked_task_params
+
+        expect(response).to have_http_status(:created)
+        json_response = response.parsed_body
+        expect(json_response['smart_goal_id']).to eq(smart_goal.id)
+      end
+    end
   end
 
   describe 'PATCH /api/v1/tasks/:id' do

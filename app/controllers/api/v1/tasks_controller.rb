@@ -58,7 +58,9 @@ module Api
       end
 
       def task_params
-        params.require(:task).permit(:title, :description, :completed, :action_category, :priority)
+        params.require(:task).permit(
+          :title, :description, :completed, :action_category, :priority, :smart_goal_id, :due_at
+        )
       end
     end
   end
