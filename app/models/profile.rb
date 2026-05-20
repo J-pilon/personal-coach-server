@@ -16,7 +16,7 @@ class Profile < ApplicationRecord
     joins(:notification_preference).where(notification_preferences: { push_enabled: true })
   }
   scope :with_active_devices, lambda {
-    joins(:device_tokens).where(device_tokens: { active: true })
+    joins(:device_tokens).merge(DeviceToken.active.not_stale)
   }
   scope :push_notification_eligible, lambda {
     with_push_enabled.with_active_devices.distinct

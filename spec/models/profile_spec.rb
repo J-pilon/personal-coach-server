@@ -46,6 +46,23 @@ RSpec.describe Profile, type: :model do
 
         expect(described_class.push_notification_eligible).to contain_exactly(eligible_profile)
       end
+
+      it 'excludes profiles whose device tokens are all stale' do
+        profile = create(:profile)
+        profile.notification_preference.update!(push_enabled: true)
+        create(:device_token, :stale, profile: profile, active: true)
+
+        expect(described_class.push_notification_eligible).not_to include(profile)
+      end
+
+      it 'includes profiles with at least one fresh active device token' do
+        profile = create(:profile)
+        profile.notification_preference.update!(push_enabled: true)
+        create(:device_token, :stale, profile: profile, active: true)
+        create(:device_token, profile: profile, active: true, last_used_at: 1.day.ago)
+
+        expect(described_class.push_notification_eligible).to include(profile)
+      end
     end
 
     describe '.inactive_for_days' do

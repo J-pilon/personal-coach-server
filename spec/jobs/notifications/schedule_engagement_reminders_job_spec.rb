@@ -124,6 +124,22 @@ RSpec.describe Notifications::ScheduleEngagementRemindersJob, type: :job do
       end
     end
 
+    context 'when profile has only stale device tokens' do
+      it 'does not call EngagementReminderService' do
+        profile = create(:profile)
+        profile.notification_preference.update!(
+          push_enabled: true,
+          last_opened_app_at: 4.days.ago
+        )
+        create(:device_token, :stale, profile: profile, active: true)
+        allow(Notifications::EngagementReminderService).to receive(:new)
+
+        described_class.perform_now
+
+        expect(Notifications::EngagementReminderService).not_to have_received(:new)
+      end
+    end
+
     context 'with multiple eligible profiles' do
       let!(:profile1) { create(:profile).tap { |p| setup_eligible_profile(p, 5.days.ago) } }
       let!(:profile2) { create(:profile).tap { |p| setup_eligible_profile(p, 10.days.ago) } }

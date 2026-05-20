@@ -8,9 +8,14 @@ FactoryBot.define do
     device_name { 'iPhone 15 Pro' }
     app_version { '1.0.0' }
     active { true }
+    last_used_at { Time.current }
 
     trait :inactive do
       active { false }
+    end
+
+    trait :stale do
+      last_used_at { (DeviceToken::STALE_AFTER + 1.day).ago }
     end
 
     trait :web do
