@@ -149,7 +149,27 @@ RSpec.describe Profile, type: :model do
     describe '#record_app_open!' do
       it 'updates last_opened_app_at on notification_preference' do
         profile.record_app_open!
-        expect(profile.notification_preference.last_opened_app_at).to be_within(1.second).of(Time.current)
+        expect(profile.notification_preference.reload.last_opened_app_at)
+          .to be_within(1.second).of(Time.current)
+      end
+
+      it 'is a no-op if last_opened_app_at was set within the throttle window' do
+        recent = 1.minute.ago
+        profile.notification_preference.update!(last_opened_app_at: recent)
+
+        profile.record_app_open!
+
+        expect(profile.notification_preference.reload.last_opened_app_at)
+          .to be_within(1.second).of(recent)
+      end
+
+      it 'updates when last_opened_app_at is older than the throttle window' do
+        profile.notification_preference.update!(last_opened_app_at: 10.minutes.ago)
+
+        profile.record_app_open!
+
+        expect(profile.notification_preference.reload.last_opened_app_at)
+          .to be_within(1.second).of(Time.current)
       end
     end
   end

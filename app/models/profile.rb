@@ -81,8 +81,16 @@ class Profile < ApplicationRecord
     notification_preference&.push_enabled? && push_tokens.exists?
   end
 
+  RECORD_APP_OPEN_THROTTLE = 5.minutes
+
   def record_app_open!
-    notification_preference&.update!(last_opened_app_at: Time.current)
+    pref = notification_preference
+    return unless pref
+    return if pref.last_opened_app_at && pref.last_opened_app_at > RECORD_APP_OPEN_THROTTLE.ago
+
+    # rubocop:disable Rails/SkipsModelValidations
+    pref.update_column(:last_opened_app_at, Time.current)
+    # rubocop:enable Rails/SkipsModelValidations
   end
 
   private
