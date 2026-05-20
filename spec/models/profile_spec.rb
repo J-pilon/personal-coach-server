@@ -46,22 +46,55 @@ RSpec.describe Profile, type: :model do
 
         expect(described_class.push_notification_eligible).to contain_exactly(eligible_profile)
       end
+
+      it 'excludes profiles whose device tokens are all stale' do
+        profile = create(:profile)
+        profile.notification_preference.update!(push_enabled: true)
+        create(:device_token, :stale, profile: profile, active: true)
+
+        expect(described_class.push_notification_eligible).not_to include(profile)
+      end
+
+      it 'includes profiles with at least one fresh active device token' do
+        profile = create(:profile)
+        profile.notification_preference.update!(push_enabled: true)
+        create(:device_token, :stale, profile: profile, active: true)
+        create(:device_token, profile: profile, active: true, last_used_at: 1.day.ago)
+
+        expect(described_class.push_notification_eligible).to include(profile)
+      end
     end
 
     describe '.inactive_for_days' do
-      it 'returns profiles inactive for specified days or with nil last_opened_app_at' do
+      it 'returns profiles whose last_opened_app_at is older than the threshold' do
         inactive_profile = create(:profile)
         inactive_profile.notification_preference.update!(last_opened_app_at: 5.days.ago)
 
         active_profile = create(:profile)
         active_profile.notification_preference.update!(last_opened_app_at: 1.day.ago)
 
-        never_opened_profile = create(:profile)
-        never_opened_profile.notification_preference.update!(last_opened_app_at: nil)
-
-        test_profiles = [inactive_profile, active_profile, never_opened_profile]
+        test_profiles = [inactive_profile, active_profile]
         result = described_class.where(id: test_profiles.map(&:id)).inactive_for_days(3)
-        expect(result).to contain_exactly(inactive_profile, never_opened_profile)
+        expect(result).to contain_exactly(inactive_profile)
+      end
+
+      it 'treats never-opened profiles whose account is older than the threshold as inactive' do
+        old_unopened = create(:profile)
+        old_unopened.notification_preference.update!(last_opened_app_at: nil)
+        # rubocop:disable Rails/SkipsModelValidations
+        old_unopened.update_column(:created_at, 5.days.ago)
+        # rubocop:enable Rails/SkipsModelValidations
+
+        result = described_class.where(id: old_unopened.id).inactive_for_days(3)
+        expect(result).to contain_exactly(old_unopened)
+      end
+
+      it 'does not return never-opened profiles whose account is younger than the threshold' do
+        new_unopened = create(:profile)
+        new_unopened.notification_preference.update!(last_opened_app_at: nil)
+
+        result = described_class.where(id: new_unopened.id).inactive_for_days(3)
+        expect(result).to be_empty
       end
     end
   end
@@ -116,7 +149,27 @@ RSpec.describe Profile, type: :model do
     describe '#record_app_open!' do
       it 'updates last_opened_app_at on notification_preference' do
         profile.record_app_open!
-        expect(profile.notification_preference.last_opened_app_at).to be_within(1.second).of(Time.current)
+        expect(profile.notification_preference.reload.last_opened_app_at)
+          .to be_within(1.second).of(Time.current)
+      end
+
+      it 'is a no-op if last_opened_app_at was set within the throttle window' do
+        recent = 1.minute.ago
+        profile.notification_preference.update!(last_opened_app_at: recent)
+
+        profile.record_app_open!
+
+        expect(profile.notification_preference.reload.last_opened_app_at)
+          .to be_within(1.second).of(recent)
+      end
+
+      it 'updates when last_opened_app_at is older than the throttle window' do
+        profile.notification_preference.update!(last_opened_app_at: 10.minutes.ago)
+
+        profile.record_app_open!
+
+        expect(profile.notification_preference.reload.last_opened_app_at)
+          .to be_within(1.second).of(Time.current)
       end
     end
   end

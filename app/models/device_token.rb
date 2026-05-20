@@ -4,6 +4,7 @@ class DeviceToken < ApplicationRecord
   belongs_to :profile
 
   PLATFORMS = %w[ios android web].freeze
+  STALE_AFTER = 90.days
 
   validates :token, presence: true
   validates :token, uniqueness: { scope: :profile_id }
@@ -12,6 +13,7 @@ class DeviceToken < ApplicationRecord
   scope :active, -> { where(active: true) }
   scope :for_platform, ->(platform) { where(platform: platform) }
   scope :push_capable, -> { where(platform: %w[ios android]) }
+  scope :not_stale, -> { where('last_used_at IS NULL OR last_used_at >= ?', STALE_AFTER.ago) }
 
   def expo_token?
     token.start_with?('ExponentPushToken')

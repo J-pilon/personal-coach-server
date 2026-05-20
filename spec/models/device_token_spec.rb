@@ -40,6 +40,30 @@ RSpec.describe DeviceToken, type: :model do
         expect(described_class.push_capable).to contain_exactly(active_ios, active_android, inactive_android)
       end
     end
+
+    describe '.not_stale' do
+      let!(:fresh_token) { create(:device_token, profile: profile, last_used_at: 1.day.ago) }
+      let!(:stale_token) { create(:device_token, :stale, profile: profile) }
+      let!(:null_token) do
+        token = create(:device_token, profile: profile)
+        # rubocop:disable Rails/SkipsModelValidations
+        token.update_column(:last_used_at, nil)
+        # rubocop:enable Rails/SkipsModelValidations
+        token
+      end
+
+      it 'excludes tokens whose last_used_at is older than STALE_AFTER' do
+        expect(described_class.not_stale).not_to include(stale_token)
+      end
+
+      it 'includes recently used tokens' do
+        expect(described_class.not_stale).to include(fresh_token)
+      end
+
+      it 'includes tokens with NULL last_used_at (treated as legacy/fresh)' do
+        expect(described_class.not_stale).to include(null_token)
+      end
+    end
   end
 
   describe '#expo_token?' do

@@ -30,9 +30,8 @@ module Notifications
     private
 
     def days_since_last_open
-      return 999 unless @profile.last_opened_app_at
-
-      (Time.current - @profile.last_opened_app_at).to_i / 1.day
+      reference = @profile.last_opened_app_at || @profile.created_at
+      (Time.current - reference).to_i / 1.day
     end
   end
 end
