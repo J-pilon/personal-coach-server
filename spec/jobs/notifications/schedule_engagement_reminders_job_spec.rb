@@ -83,13 +83,32 @@ RSpec.describe Notifications::ScheduleEngagementRemindersJob, type: :job do
       end
     end
 
-    context 'when profile has never opened the app' do
-      it 'calls EngagementReminderService (nil last_opened_app_at)' do
+    context 'when profile has never opened the app and account is brand new' do
+      it 'does not call EngagementReminderService' do
         profile = create(:profile)
         profile.notification_preference.update!(
           push_enabled: true,
           last_opened_app_at: nil
         )
+        create(:device_token, profile: profile, active: true)
+        allow(Notifications::EngagementReminderService).to receive(:new)
+
+        described_class.perform_now
+
+        expect(Notifications::EngagementReminderService).not_to have_received(:new)
+      end
+    end
+
+    context 'when profile has never opened the app and account is older than threshold' do
+      it 'calls EngagementReminderService using profile creation as the activity anchor' do
+        profile = create(:profile)
+        profile.notification_preference.update!(
+          push_enabled: true,
+          last_opened_app_at: nil
+        )
+        # rubocop:disable Rails/SkipsModelValidations
+        profile.update_column(:created_at, 5.days.ago)
+        # rubocop:enable Rails/SkipsModelValidations
         create(:device_token, profile: profile, active: true)
 
         mock_service = instance_double(Notifications::EngagementReminderService)

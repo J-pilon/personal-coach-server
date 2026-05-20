@@ -49,19 +49,35 @@ RSpec.describe Profile, type: :model do
     end
 
     describe '.inactive_for_days' do
-      it 'returns profiles inactive for specified days or with nil last_opened_app_at' do
+      it 'returns profiles whose last_opened_app_at is older than the threshold' do
         inactive_profile = create(:profile)
         inactive_profile.notification_preference.update!(last_opened_app_at: 5.days.ago)
 
         active_profile = create(:profile)
         active_profile.notification_preference.update!(last_opened_app_at: 1.day.ago)
 
-        never_opened_profile = create(:profile)
-        never_opened_profile.notification_preference.update!(last_opened_app_at: nil)
-
-        test_profiles = [inactive_profile, active_profile, never_opened_profile]
+        test_profiles = [inactive_profile, active_profile]
         result = described_class.where(id: test_profiles.map(&:id)).inactive_for_days(3)
-        expect(result).to contain_exactly(inactive_profile, never_opened_profile)
+        expect(result).to contain_exactly(inactive_profile)
+      end
+
+      it 'treats never-opened profiles whose account is older than the threshold as inactive' do
+        old_unopened = create(:profile)
+        old_unopened.notification_preference.update!(last_opened_app_at: nil)
+        # rubocop:disable Rails/SkipsModelValidations
+        old_unopened.update_column(:created_at, 5.days.ago)
+        # rubocop:enable Rails/SkipsModelValidations
+
+        result = described_class.where(id: old_unopened.id).inactive_for_days(3)
+        expect(result).to contain_exactly(old_unopened)
+      end
+
+      it 'does not return never-opened profiles whose account is younger than the threshold' do
+        new_unopened = create(:profile)
+        new_unopened.notification_preference.update!(last_opened_app_at: nil)
+
+        result = described_class.where(id: new_unopened.id).inactive_for_days(3)
+        expect(result).to be_empty
       end
     end
   end

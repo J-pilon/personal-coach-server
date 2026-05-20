@@ -23,8 +23,7 @@ class Profile < ApplicationRecord
   }
   scope :inactive_for_days, lambda { |days|
     joins(:notification_preference).where(
-      'notification_preferences.last_opened_app_at IS NULL OR ' \
-      'notification_preferences.last_opened_app_at < ?',
+      'COALESCE(notification_preferences.last_opened_app_at, profiles.created_at) < ?',
       days.days.ago
     )
   }

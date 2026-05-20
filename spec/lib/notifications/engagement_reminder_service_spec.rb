@@ -54,8 +54,15 @@ RSpec.describe Notifications::EngagementReminderService do
     end
 
     context 'when user has never opened the app' do
-      it 'returns 999 as fallback' do
-        expect(service.send(:days_since_last_open)).to eq(999)
+      before do
+        profile.notification_preference.update!(last_opened_app_at: nil)
+        # rubocop:disable Rails/SkipsModelValidations
+        profile.update_column(:created_at, 7.days.ago)
+        # rubocop:enable Rails/SkipsModelValidations
+      end
+
+      it 'falls back to profile creation date' do
+        expect(service.send(:days_since_last_open)).to eq(7)
       end
     end
 
@@ -64,6 +71,34 @@ RSpec.describe Notifications::EngagementReminderService do
 
       it 'returns the correct number of days' do
         expect(service.send(:days_since_last_open)).to eq(10)
+      end
+    end
+  end
+
+  describe '#should_send?' do
+    before { create(:device_token, profile: profile, active: true) }
+
+    context 'when user was active yesterday' do
+      before { profile.notification_preference.update!(last_opened_app_at: 1.day.ago) }
+
+      it 'returns false' do
+        expect(service.send(:should_send?)).to be(false)
+      end
+    end
+
+    context 'when user has been inactive past the threshold' do
+      before { profile.notification_preference.update!(last_opened_app_at: 5.days.ago) }
+
+      it 'returns true' do
+        expect(service.send(:should_send?)).to be(true)
+      end
+    end
+
+    context 'when user has never opened the app and account is brand new' do
+      before { profile.notification_preference.update!(last_opened_app_at: nil) }
+
+      it 'returns false' do
+        expect(service.send(:should_send?)).to be(false)
       end
     end
   end

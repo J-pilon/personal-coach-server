@@ -148,10 +148,25 @@ RSpec.describe 'Notification flow integration' do
         end
       end
 
-      context 'when profile has never opened the app' do
+      context 'when profile has never opened the app and account is brand new' do
+        before do
+          profile.notification_preference.update!(last_opened_app_at: nil)
+        end
+
+        it 'does not send engagement reminder' do
+          expect do
+            Notifications::ScheduleEngagementRemindersJob.perform_now
+          end.not_to change(Notification, :count)
+        end
+      end
+
+      context 'when profile has never opened the app but account is older than threshold' do
         before do
           stub_expo_push_success
           profile.notification_preference.update!(last_opened_app_at: nil)
+          # rubocop:disable Rails/SkipsModelValidations
+          profile.update_column(:created_at, 5.days.ago)
+          # rubocop:enable Rails/SkipsModelValidations
         end
 
         it 'sends engagement reminder' do
