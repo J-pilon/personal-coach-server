@@ -59,6 +59,107 @@ RSpec.describe 'Api::V1::SmartGoals', type: :request do
     end
   end
 
+  describe 'GET /api/v1/smart_goals/:id' do
+    let!(:smart_goal) { create(:smart_goal, profile: profile) }
+
+    it 'returns the smart goal with all expected attributes' do
+      get api_v1_smart_goal_path(smart_goal)
+
+      expect(response).to have_http_status(:ok)
+      json_response = response.parsed_body
+
+      expect(json_response).to include(
+        'id', 'title', 'description', 'timeframe',
+        'specific', 'measurable', 'achievable', 'relevant', 'time_bound',
+        'completed', 'target_date', 'profile_id', 'tasks'
+      )
+      expect(json_response['id']).to eq(smart_goal.id)
+    end
+
+    context 'with linked tasks' do
+      let!(:open_task)      { create(:task, profile: profile, smart_goal: smart_goal, completed: false) }
+      let!(:other_open)     { create(:task, profile: profile, smart_goal: smart_goal, completed: false) }
+      let!(:completed_task) { create(:task, profile: profile, smart_goal: smart_goal, completed: true) }
+      let!(:unlinked_task)  { create(:task, profile: profile, smart_goal: nil, completed: false) }
+
+      it 'separates tasks into open and completed sections' do
+        get api_v1_smart_goal_path(smart_goal)
+
+        json_response = response.parsed_body
+        open_ids = json_response['tasks']['open'].pluck('id')
+        completed_ids = json_response['tasks']['completed'].pluck('id')
+
+        expect(open_ids).to contain_exactly(open_task.id, other_open.id)
+        expect(completed_ids).to eq([completed_task.id])
+      end
+
+      it 'excludes tasks belonging to other goals or no goal' do
+        get api_v1_smart_goal_path(smart_goal)
+
+        json_response = response.parsed_body
+        all_ids = json_response['tasks']['open'].pluck('id') + json_response['tasks']['completed'].pluck('id')
+
+        expect(all_ids).not_to include(unlinked_task.id)
+      end
+
+      it 'returns expected task attributes' do
+        get api_v1_smart_goal_path(smart_goal)
+
+        json_response = response.parsed_body
+        task = json_response['tasks']['open'].first
+
+        expect(task).to include(
+          'id', 'title', 'description', 'completed',
+          'action_category', 'priority', 'due_at', 'smart_goal_id'
+        )
+      end
+    end
+
+    context 'with no linked tasks' do
+      it 'returns empty arrays for both sections' do
+        get api_v1_smart_goal_path(smart_goal)
+
+        json_response = response.parsed_body
+        expect(json_response['tasks']['open']).to eq([])
+        expect(json_response['tasks']['completed']).to eq([])
+      end
+    end
+
+    context 'when more than 50 tasks per section exist' do
+      before do
+        create_list(:task, 51, profile: profile, smart_goal: smart_goal, completed: false)
+        create_list(:task, 51, profile: profile, smart_goal: smart_goal, completed: true)
+      end
+
+      it 'caps each section at 50 entries' do
+        get api_v1_smart_goal_path(smart_goal)
+
+        json_response = response.parsed_body
+        expect(json_response['tasks']['open'].size).to eq(50)
+        expect(json_response['tasks']['completed'].size).to eq(50)
+      end
+    end
+
+    context 'when smart goal does not exist' do
+      it 'returns not found status' do
+        get api_v1_smart_goal_path(999_999)
+
+        expect(response).to have_http_status(:not_found)
+      end
+    end
+
+    context 'when smart goal belongs to a different user' do
+      let!(:other_user) { create(:user) }
+      let!(:other_smart_goal) { create(:smart_goal, profile: other_user.profile) }
+
+      it 'returns not found status' do
+        get api_v1_smart_goal_path(other_smart_goal)
+
+        expect(response).to have_http_status(:not_found)
+      end
+    end
+  end
+
   describe 'POST /api/v1/smart_goals' do
     context 'with valid parameters' do
       let(:valid_params) do

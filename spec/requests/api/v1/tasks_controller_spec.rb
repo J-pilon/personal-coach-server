@@ -51,6 +51,23 @@ RSpec.describe 'Api::V1::Tasks', type: :request do
         expect(json_response).to eq([])
       end
     end
+
+    context 'when a task has a linked smart goal' do
+      let!(:smart_goal) { create(:smart_goal, profile: profile, title: 'Ship PC-B') }
+      let!(:linked_task)   { create(:task, profile: profile, smart_goal: smart_goal) }
+      let!(:unlinked_task) { create(:task, profile: profile, smart_goal: nil) }
+
+      it 'embeds the parent goal id and title on linked tasks' do
+        get api_v1_tasks_path
+
+        json_response = response.parsed_body
+        linked = json_response.find { |t| t['id'] == linked_task.id }
+        unlinked = json_response.find { |t| t['id'] == unlinked_task.id }
+
+        expect(linked['smart_goal']).to eq('id' => smart_goal.id, 'title' => 'Ship PC-B')
+        expect(unlinked['smart_goal']).to be_nil
+      end
+    end
   end
 
   describe 'GET /api/v1/tasks/:id' do
@@ -68,6 +85,18 @@ RSpec.describe 'Api::V1::Tasks', type: :request do
         expect(json_response['description']).to eq(task.description)
         expect(json_response['completed']).to eq(task.completed)
         expect(json_response['action_category']).to eq(task.action_category)
+      end
+    end
+
+    context 'when task has a linked smart goal' do
+      let!(:smart_goal) { create(:smart_goal, profile: profile, title: 'Ship PC-B') }
+      let!(:linked_task) { create(:task, profile: profile, smart_goal: smart_goal) }
+
+      it 'embeds the parent goal id and title' do
+        get api_v1_task_path(linked_task)
+
+        json_response = response.parsed_body
+        expect(json_response['smart_goal']).to eq('id' => smart_goal.id, 'title' => 'Ship PC-B')
       end
     end
 
@@ -171,6 +200,27 @@ RSpec.describe 'Api::V1::Tasks', type: :request do
 
           expect(response).to have_http_status(:unprocessable_entity)
         end
+      end
+    end
+
+    context 'when linking a task to a smart goal' do
+      let!(:smart_goal) { create(:smart_goal, profile: profile) }
+      let(:linked_task_params) do
+        {
+          task: {
+            title: 'Task linked to a goal',
+            action_category: 'do',
+            smart_goal_id: smart_goal.id
+          }
+        }
+      end
+
+      it 'persists the smart_goal_id' do
+        post api_v1_tasks_path, params: linked_task_params
+
+        expect(response).to have_http_status(:created)
+        json_response = response.parsed_body
+        expect(json_response['smart_goal_id']).to eq(smart_goal.id)
       end
     end
   end
