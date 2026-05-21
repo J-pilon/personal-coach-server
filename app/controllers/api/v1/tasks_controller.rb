@@ -4,27 +4,26 @@ module Api
   module V1
     # Controller for managing user tasks
     class TasksController < ApplicationController
+      TASK_JSON_OPTIONS = { include: { smart_goal: { only: %i[id title] } } }.freeze
+
       before_action :authenticate_api_v1_user!
       before_action :set_task, only: %i[show update destroy]
 
       def index
-        @tasks = if params[:completed].present?
-                   current_api_v1_profile.tasks.where(completed: params[:completed])
-                 else
-                   current_api_v1_profile.tasks
-                 end
+        scope = current_api_v1_profile.tasks.includes(:smart_goal)
+        @tasks = params[:completed].present? ? scope.where(completed: params[:completed]) : scope
 
-        render json: @tasks
+        render json: @tasks.as_json(TASK_JSON_OPTIONS)
       end
 
       def show
-        render json: @task
+        render json: @task.as_json(TASK_JSON_OPTIONS)
       end
 
       def create
         @task = current_api_v1_profile.tasks.build(task_params)
         if @task.save
-          render json: @task, status: :created
+          render json: @task.as_json(TASK_JSON_OPTIONS), status: :created
         else
           render json: { errors: @task.errors.full_messages }, status: :unprocessable_entity
         end
@@ -36,7 +35,7 @@ module Api
 
       def update
         if @task.update(task_params)
-          render json: @task
+          render json: @task.as_json(TASK_JSON_OPTIONS)
         else
           render json: { errors: @task.errors.full_messages }, status: :unprocessable_entity
         end
@@ -54,7 +53,7 @@ module Api
       private
 
       def set_task
-        @task = current_api_v1_profile.tasks.find(params[:id])
+        @task = current_api_v1_profile.tasks.includes(:smart_goal).find(params[:id])
       end
 
       def task_params
