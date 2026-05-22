@@ -59,6 +59,8 @@ RSpec.configure do |config|
   config.include Devise::Test::ControllerHelpers, type: :controller
 end
 
+RSpec::Matchers.define_negated_matcher :not_change, :change
+
 # Shoulda Matchers configuration
 Shoulda::Matchers.configure do |config|
   config.integrate do |with|

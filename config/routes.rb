@@ -33,6 +33,9 @@ Rails.application.routes.draw do
         end
       end
       resources :smart_goals
+      resource :journal, only: %i[show] do
+        resources :journal_entries, only: %i[index show create update destroy]
+      end
       resources :tickets, only: %i[create show]
       post 'ai/proxy', to: 'ai#proxy'
       post 'ai/usage', to: 'ai#usage'
