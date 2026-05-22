@@ -9,6 +9,8 @@ class Profile < ApplicationRecord
   has_many :tickets, dependent: :destroy
   has_many :notifications, dependent: :destroy
   has_many :device_tokens, dependent: :destroy
+  has_many :journals, dependent: :destroy
+  has_many :journal_entries, dependent: :destroy
   has_one :notification_preference, dependent: :destroy
 
   # Notification scopes

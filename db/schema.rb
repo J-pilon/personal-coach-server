@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_12_12_214407) do
+ActiveRecord::Schema[7.2].define(version: 2026_05_21_120100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -46,6 +46,32 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_12_214407) do
     t.index ["platform"], name: "index_device_tokens_on_platform"
     t.index ["profile_id", "token"], name: "index_device_tokens_on_profile_id_and_token", unique: true
     t.index ["profile_id"], name: "index_device_tokens_on_profile_id"
+  end
+
+  create_table "journal_entries", force: :cascade do |t|
+    t.bigint "profile_id", null: false
+    t.bigint "journal_id", null: false
+    t.string "title"
+    t.text "body", null: false
+    t.string "entry_type", null: false
+    t.date "occurred_on", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["journal_id"], name: "index_journal_entries_on_journal_id"
+    t.index ["profile_id", "entry_type"], name: "index_journal_entries_on_profile_id_and_entry_type"
+    t.index ["profile_id", "occurred_on"], name: "index_journal_entries_on_profile_id_and_occurred_on"
+    t.index ["profile_id"], name: "index_journal_entries_on_profile_id"
+  end
+
+  create_table "journals", force: :cascade do |t|
+    t.bigint "profile_id", null: false
+    t.string "title", null: false
+    t.string "description"
+    t.string "kind", default: "default", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["profile_id", "kind"], name: "index_journals_on_profile_id_and_kind", unique: true
+    t.index ["profile_id"], name: "index_journals_on_profile_id"
   end
 
   create_table "notification_preferences", force: :cascade do |t|
@@ -163,6 +189,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_12_214407) do
 
   add_foreign_key "ai_requests", "profiles"
   add_foreign_key "device_tokens", "profiles"
+  add_foreign_key "journal_entries", "journals"
+  add_foreign_key "journal_entries", "profiles"
+  add_foreign_key "journals", "profiles"
   add_foreign_key "notification_preferences", "profiles"
   add_foreign_key "notifications", "device_tokens"
   add_foreign_key "notifications", "profiles"
