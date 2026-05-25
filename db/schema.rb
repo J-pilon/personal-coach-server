@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_05_25_121000) do
+ActiveRecord::Schema[7.2].define(version: 2026_05_25_232700) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -156,7 +156,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_05_25_121000) do
     t.integer "priority"
     t.bigint "smart_goal_id"
     t.datetime "due_at"
-    t.time "reminder_at", default: "2000-01-01 09:00:00", null: false
+    t.datetime "reminder_at"
     t.index ["profile_id"], name: "index_tasks_on_profile_id"
     t.index ["smart_goal_id"], name: "index_tasks_on_smart_goal_id"
   end
