@@ -11,3 +11,17 @@ schedule_engagement_reminders:
   queue: critical
   active_job: true
   description: "Send engagement reminders to users inactive for 3+ days"
+
+schedule_task_reminders:
+  cron: "0 * * * *"
+  class: "Notifications::ScheduleTaskRemindersJob"
+  queue: critical
+  active_job: true
+  description: "Schedule task due-date reminders based on each task's reminder_at hour"
+
+schedule_smart_goal_reminders:
+  cron: "0 * * * *"
+  class: "Notifications::ScheduleSmartGoalRemindersJob"
+  queue: critical
+  active_job: true
+  description: "Schedule smart goal target-date reminders based on each goal's reminder_at hour"
