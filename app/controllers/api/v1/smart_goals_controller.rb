@@ -18,17 +18,20 @@ module Api
       end
 
       def create
-        smart_goal = current_api_v1_profile.smart_goals.build(smart_goal_params)
+        result = SmartGoals::Create.call(
+          profile: current_api_v1_profile,
+          params: create_smart_goal_params
+        )
 
-        if smart_goal.save
-          render json: smart_goal, status: :created
+        if result.success?
+          render json: result.smart_goal, status: :created
         else
-          render json: { errors: smart_goal.errors.full_messages }, status: :unprocessable_entity
+          render json: { errors: result.errors }, status: :unprocessable_entity
         end
       end
 
       def update
-        if @smart_goal.update(smart_goal_params)
+        if @smart_goal.update(update_smart_goal_params)
           render json: @smart_goal
         else
           render json: { errors: @smart_goal.errors.full_messages }, status: :unprocessable_entity
@@ -42,10 +45,17 @@ module Api
 
       private
 
-      def smart_goal_params
+      def create_smart_goal_params
         params.require(:smart_goal).permit(
           :title, :description, :timeframe, :specific, :measurable,
-          :achievable, :relevant, :time_bound, :completed, :target_date
+          :achievable, :relevant, :time_bound, :completed
+        )
+      end
+
+      def update_smart_goal_params
+        params.require(:smart_goal).permit(
+          :title, :description, :timeframe, :specific, :measurable,
+          :achievable, :relevant, :time_bound, :completed
         )
       end
 
