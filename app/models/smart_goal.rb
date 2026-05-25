@@ -11,6 +11,7 @@ class SmartGoal < ApplicationRecord
   validates :achievable, presence: true
   validates :relevant, presence: true
   validates :time_bound, presence: true
+  validates :target_date, presence: true
 
   scope :by_timeframe, ->(timeframe) { where(timeframe: timeframe) }
   scope :completed, -> { where(completed: true) }

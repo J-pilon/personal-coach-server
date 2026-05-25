@@ -3,6 +3,8 @@
 require 'rails_helper'
 
 RSpec.describe 'Api::V1::SmartGoals', type: :request do
+  include ActiveSupport::Testing::TimeHelpers
+
   let!(:user) { create(:user) }
   let!(:profile) { user.profile }
 
@@ -173,8 +175,7 @@ RSpec.describe 'Api::V1::SmartGoals', type: :request do
             achievable: 'Dedicate 2 hours daily to learning and practice',
             relevant: 'Enhance mobile development skills for career growth',
             time_bound: 'Complete all projects within 3 months',
-            completed: false,
-            target_date: 3.months.from_now.to_date
+            completed: false
           }
         }
       end
@@ -204,6 +205,29 @@ RSpec.describe 'Api::V1::SmartGoals', type: :request do
           expect(json_response['completed']).to be(false)
         end
       end
+
+      it 'derives target_date from timeframe in the profile timezone' do
+        profile.update!(timezone: 'America/Los_Angeles')
+
+        travel_to Time.zone.local(2026, 5, 25, 14, 30, 0) do
+          post api_v1_smart_goals_path, params: valid_params
+
+          expected = Time.current.in_time_zone('America/Los_Angeles').beginning_of_day + 3.months
+          expect(Time.zone.parse(response.parsed_body['target_date'])).to eq(expected)
+        end
+      end
+
+      it 'ignores any client-supplied target_date and derives its own' do
+        bogus = 10.years.from_now.to_date.iso8601
+        params_with_target = valid_params.deep_merge(smart_goal: { target_date: bogus })
+
+        travel_to Time.zone.local(2026, 5, 25, 14, 30, 0) do
+          post api_v1_smart_goals_path, params: params_with_target
+
+          expected = Time.current.in_time_zone(profile.timezone).beginning_of_day + 3.months
+          expect(Time.zone.parse(response.parsed_body['target_date'])).to eq(expected)
+        end
+      end
     end
 
     context 'with invalid parameters' do
@@ -218,8 +242,7 @@ RSpec.describe 'Api::V1::SmartGoals', type: :request do
               achievable: 'Dedicate 2 hours daily to learning and practice',
               relevant: 'Enhance mobile development skills for career growth',
               time_bound: 'Complete all projects within 3 months',
-              completed: false,
-              target_date: 3.months.from_now.to_date
+              completed: false
             }
           }
         end
@@ -256,8 +279,7 @@ RSpec.describe 'Api::V1::SmartGoals', type: :request do
               achievable: 'Dedicate 2 hours daily to learning and practice',
               relevant: 'Enhance mobile development skills for career growth',
               time_bound: 'Complete all projects within 3 months',
-              completed: false,
-              target_date: 3.months.from_now.to_date
+              completed: false
             }
           }
         end
@@ -287,8 +309,7 @@ RSpec.describe 'Api::V1::SmartGoals', type: :request do
               achievable: 'Dedicate 2 hours daily to learning and practice',
               relevant: 'Enhance mobile development skills for career growth',
               time_bound: 'Complete all projects within 3 months',
-              completed: false,
-              target_date: 3.months.from_now.to_date
+              completed: false
             }
           }
         end

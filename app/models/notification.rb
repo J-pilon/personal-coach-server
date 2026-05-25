@@ -4,7 +4,7 @@ class Notification < ApplicationRecord
   belongs_to :profile
   belongs_to :device_token, optional: true # For push, tracks which device
 
-  TYPES = %w[daily_reminder engagement_reminder task_reminder].freeze
+  TYPES = %w[daily_reminder engagement_reminder task_reminder smart_goal_reminder].freeze
   STATUSES = %w[pending sent failed].freeze
   CHANNELS = %w[push email sms].freeze
 
