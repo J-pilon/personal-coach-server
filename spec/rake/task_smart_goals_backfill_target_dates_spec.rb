@@ -19,13 +19,17 @@ RSpec.describe Rake::Task, 'smart_goals:backfill_target_dates' do
     original_batch_size = ENV.fetch('BATCH_SIZE', nil)
     original_dry_run = ENV.fetch('DRY_RUN', nil)
     original_report_path = ENV.fetch('REPORT_PATH', nil)
+    connection = ActiveRecord::Base.connection
 
     ENV['BATCH_SIZE'] = batch_size
     ENV['DRY_RUN'] = dry_run
     ENV['REPORT_PATH'] = report_path
+    connection.change_column_null(:smart_goals, :target_date, true)
 
     example.run
   ensure
+    SmartGoal.where(target_date: nil).delete_all
+    connection.change_column_null(:smart_goals, :target_date, false)
     ENV['BATCH_SIZE'] = original_batch_size
     ENV['DRY_RUN'] = original_dry_run
     ENV['REPORT_PATH'] = original_report_path
