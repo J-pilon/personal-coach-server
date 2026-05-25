@@ -40,7 +40,7 @@ namespace :smart_goals do
         end
 
         begin
-          smart_goal.update_columns(target_date: target_date_or_error[:target_date], updated_at: Time.current)
+          smart_goal.update(target_date: target_date_or_error[:target_date], updated_at: Time.current)
           stats[:updated] += 1
         rescue StandardError => e
           stats[:failed] += 1
