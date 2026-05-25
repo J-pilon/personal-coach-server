@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_05_25_120001) do
+ActiveRecord::Schema[7.2].define(version: 2026_05_25_121000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -138,7 +138,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_05_25_120001) do
     t.text "time_bound"
     t.boolean "completed", default: false
     t.bigint "profile_id", null: false
-    t.datetime "target_date"
+    t.datetime "target_date", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.time "reminder_at", default: "2000-01-01 09:00:00", null: false
