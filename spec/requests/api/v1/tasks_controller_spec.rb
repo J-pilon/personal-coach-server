@@ -151,6 +151,47 @@ RSpec.describe 'Api::V1::Tasks', type: :request do
       end
     end
 
+    context 'with due_at and reminder_at combinations' do
+      let(:base_task_params) do
+        {
+          title: 'Task with scheduling fields',
+          action_category: 'do'
+        }
+      end
+
+      it 'can be created without reminder_at' do
+        post api_v1_tasks_path, params: { task: base_task_params.merge(due_at: '2026-06-25T22:12:35.364Z') }
+
+        expect(response).to have_http_status(:created)
+        created_task = Task.order(:id).last
+        expect(created_task.reminder_at).to be_nil
+      end
+
+      it 'can be created with reminder_at' do
+        post api_v1_tasks_path, params: { task: base_task_params.merge(reminder_at: '2026-06-25T09:30:00.000Z') }
+
+        expect(response).to have_http_status(:created)
+        created_task = Task.order(:id).last
+        expect(created_task.reminder_at).to be_present
+      end
+
+      it 'can be created without due_at' do
+        post api_v1_tasks_path, params: { task: base_task_params.merge(reminder_at: '2026-06-25T09:30:00.000Z') }
+
+        expect(response).to have_http_status(:created)
+        created_task = Task.order(:id).last
+        expect(created_task.due_at).to be_nil
+      end
+
+      it 'can be created with due_at' do
+        post api_v1_tasks_path, params: { task: base_task_params.merge(due_at: '2026-06-25T22:12:35.364Z') }
+
+        expect(response).to have_http_status(:created)
+        created_task = Task.order(:id).last
+        expect(created_task.due_at).to be_present
+      end
+    end
+
     context 'with invalid parameters' do
       context 'when title is missing' do
         let(:invalid_params) do
@@ -282,6 +323,44 @@ RSpec.describe 'Api::V1::Tasks', type: :request do
 
         expect(json_response['completed']).to be(true)
         expect(json_response['title']).to eq(original_title)
+      end
+    end
+
+    context 'with due_at and reminder_at updates' do
+      it 'can be updated with due_at' do
+        patch api_v1_task_path(task), params: { task: { due_at: '2026-06-25T22:12:35.364Z' } }
+
+        expect(response).to have_http_status(:ok)
+        task.reload
+        expect(task.due_at).to be_present
+      end
+
+      it 'can clear due_at' do
+        task.update!(due_at: Time.zone.parse('2026-06-25T22:12:35.364Z'))
+
+        patch api_v1_task_path(task), params: { task: { due_at: nil } }
+
+        expect(response).to have_http_status(:ok)
+        task.reload
+        expect(task.due_at).to be_nil
+      end
+
+      it 'can be updated with reminder_at' do
+        patch api_v1_task_path(task), params: { task: { reminder_at: '2026-06-25T09:30:00.000Z' } }
+
+        expect(response).to have_http_status(:ok)
+        task.reload
+        expect(task.reminder_at).to be_present
+      end
+
+      it 'can clear reminder_at' do
+        task.update!(reminder_at: Time.zone.parse('2026-06-25T09:30:00.000Z'))
+
+        patch api_v1_task_path(task), params: { task: { reminder_at: nil } }
+
+        expect(response).to have_http_status(:ok)
+        task.reload
+        expect(task.reminder_at).to be_nil
       end
     end
 
