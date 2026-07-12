@@ -84,6 +84,10 @@ Rails/I18nLocaleTexts:
   Enabled: false
 
 # RSpec
+RSpec/SpecFilePathFormat:
+  Exclude:
+    - 'spec/rake/**/*'
+
 RSpec/ExampleLength:
   Max: 20
 
