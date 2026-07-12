@@ -103,3 +103,5 @@ summary.json
 
 # For private project specific information
 personal.txt
+# Git worktrees created by superpowers:using-git-worktrees
+.worktrees/
