@@ -45,6 +45,19 @@ Rails.application.routes.draw do
       get 'jobs/:id', to: 'job_status#show'
       resources :device_tokens, only: %i[create destroy]
       resource :notification_preferences, only: %i[show update]
+
+      resources :habits, only: %i[create]
+      resources :habit_completions, only: %i[create]
+      resources :notification_schedules, only: %i[create]
+
+      get 'onboarding/resume', to: 'onboarding#resume'
+      namespace :onboarding do
+        namespace :discovery do
+          resources :sessions, only: %i[create]
+          resources :messages, only: %i[create]
+        end
+        post 'habits/suggest', to: 'habits#suggest'
+      end
     end
   end
 end
