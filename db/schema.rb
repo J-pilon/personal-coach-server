@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_05_25_232700) do
+ActiveRecord::Schema[7.2].define(version: 2026_07_14_120400) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -46,6 +46,37 @@ ActiveRecord::Schema[7.2].define(version: 2026_05_25_232700) do
     t.index ["platform"], name: "index_device_tokens_on_platform"
     t.index ["profile_id", "token"], name: "index_device_tokens_on_profile_id_and_token", unique: true
     t.index ["profile_id"], name: "index_device_tokens_on_profile_id"
+  end
+
+  create_table "habit_completions", force: :cascade do |t|
+    t.bigint "habit_id", null: false
+    t.date "completed_on", null: false
+    t.string "state", null: false
+    t.datetime "committed_at"
+    t.datetime "completed_at"
+    t.text "note"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["habit_id", "completed_on"], name: "index_habit_completions_on_habit_id_and_completed_on", unique: true
+    t.index ["habit_id"], name: "index_habit_completions_on_habit_id"
+  end
+
+  create_table "habits", force: :cascade do |t|
+    t.bigint "profile_id", null: false
+    t.bigint "smart_goal_id", null: false
+    t.string "title", null: false
+    t.string "frequency", null: false
+    t.jsonb "frequency_config", default: {}, null: false
+    t.string "cue", null: false
+    t.string "minimum_version", null: false
+    t.string "normal_version", null: false
+    t.integer "position", null: false
+    t.datetime "archived_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["profile_id"], name: "index_habits_on_profile_id"
+    t.index ["smart_goal_id", "position"], name: "index_habits_on_goal_position_active", unique: true, where: "(archived_at IS NULL)"
+    t.index ["smart_goal_id"], name: "index_habits_on_smart_goal_id"
   end
 
   create_table "journal_entries", force: :cascade do |t|
@@ -89,6 +120,18 @@ ActiveRecord::Schema[7.2].define(version: 2026_05_25_232700) do
     t.index ["profile_id"], name: "index_notification_preferences_on_profile_id"
   end
 
+  create_table "notification_schedules", force: :cascade do |t|
+    t.bigint "profile_id", null: false
+    t.string "kind", null: false
+    t.time "local_time", null: false
+    t.string "timezone", null: false
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["profile_id", "kind"], name: "index_notification_schedules_active_kind", unique: true, where: "(active = true)"
+    t.index ["profile_id"], name: "index_notification_schedules_on_profile_id"
+  end
+
   create_table "notifications", force: :cascade do |t|
     t.bigint "profile_id", null: false
     t.string "notification_type", null: false
@@ -124,6 +167,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_05_25_232700) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "timezone", default: "UTC"
+    t.string "onboarding_version"
     t.index ["user_id"], name: "index_profiles_on_user_id"
   end
 
@@ -142,7 +186,10 @@ ActiveRecord::Schema[7.2].define(version: 2026_05_25_232700) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.time "reminder_at", default: "2000-01-01 09:00:00", null: false
+    t.boolean "primary", default: false, null: false
+    t.text "why"
     t.index ["profile_id"], name: "index_smart_goals_on_profile_id"
+    t.index ["profile_id"], name: "index_smart_goals_one_primary_uncompleted_per_profile", unique: true, where: "((\"primary\" = true) AND (completed = false))"
   end
 
   create_table "tasks", force: :cascade do |t|
@@ -191,10 +238,14 @@ ActiveRecord::Schema[7.2].define(version: 2026_05_25_232700) do
 
   add_foreign_key "ai_requests", "profiles"
   add_foreign_key "device_tokens", "profiles"
+  add_foreign_key "habit_completions", "habits"
+  add_foreign_key "habits", "profiles"
+  add_foreign_key "habits", "smart_goals"
   add_foreign_key "journal_entries", "journals"
   add_foreign_key "journal_entries", "profiles"
   add_foreign_key "journals", "profiles"
   add_foreign_key "notification_preferences", "profiles"
+  add_foreign_key "notification_schedules", "profiles"
   add_foreign_key "notifications", "device_tokens"
   add_foreign_key "notifications", "profiles"
   add_foreign_key "profiles", "users"
