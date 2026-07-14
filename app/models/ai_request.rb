@@ -6,7 +6,9 @@ class AiRequest < ApplicationRecord
   belongs_to :profile
 
   validates :prompt, presence: true
-  validates :job_type, presence: true, inclusion: { in: %w[smart_goal prioritization task_suggestion] }
+  validates :job_type, presence: true, inclusion: {
+    in: %w[smart_goal prioritization task_suggestion onboarding_goal_discovery onboarding_habit_suggestion]
+  }
   validates :hash_value, presence: true
   # TODO: Add unique index on the db column and then uncomment the line below
   # validates :hash_value, presence: true, uniqueness: true
