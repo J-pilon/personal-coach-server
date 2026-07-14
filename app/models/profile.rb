@@ -13,6 +13,7 @@ class Profile < ApplicationRecord
   has_many :journal_entries, dependent: :destroy
   has_many :habits, dependent: :destroy
   has_many :notification_schedules, dependent: :destroy
+  has_many :discovery_sessions, dependent: :destroy
   has_one :notification_preference, dependent: :destroy
 
   # Notification scopes

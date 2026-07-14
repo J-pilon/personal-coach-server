@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_07_14_120400) do
+ActiveRecord::Schema[7.2].define(version: 2026_07_14_120500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -46,6 +46,18 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_14_120400) do
     t.index ["platform"], name: "index_device_tokens_on_platform"
     t.index ["profile_id", "token"], name: "index_device_tokens_on_profile_id_and_token", unique: true
     t.index ["profile_id"], name: "index_device_tokens_on_profile_id"
+  end
+
+  create_table "discovery_sessions", force: :cascade do |t|
+    t.bigint "profile_id", null: false
+    t.bigint "smart_goal_id"
+    t.jsonb "messages", default: [], null: false
+    t.string "status", default: "active", null: false
+    t.integer "turn_count", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["profile_id"], name: "index_discovery_sessions_on_profile_id"
+    t.index ["smart_goal_id"], name: "index_discovery_sessions_on_smart_goal_id"
   end
 
   create_table "habit_completions", force: :cascade do |t|
@@ -238,6 +250,8 @@ ActiveRecord::Schema[7.2].define(version: 2026_07_14_120400) do
 
   add_foreign_key "ai_requests", "profiles"
   add_foreign_key "device_tokens", "profiles"
+  add_foreign_key "discovery_sessions", "profiles"
+  add_foreign_key "discovery_sessions", "smart_goals"
   add_foreign_key "habit_completions", "habits"
   add_foreign_key "habits", "profiles"
   add_foreign_key "habits", "smart_goals"
