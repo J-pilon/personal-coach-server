@@ -39,18 +39,18 @@ RSpec.describe Habit, type: :model do
       goal = create(:smart_goal)
       create(:habit, :archived, smart_goal: goal, profile: goal.profile, position: 1)
 
-      expect {
+      expect do
         create(:habit, smart_goal: goal, profile: goal.profile, position: 1)
-      }.not_to raise_error
+      end.not_to raise_error
     end
 
     it 'rejects two active habits sharing a position within a goal' do
       goal = create(:smart_goal)
       create(:habit, smart_goal: goal, profile: goal.profile, position: 1)
 
-      expect {
+      expect do
         create(:habit, smart_goal: goal, profile: goal.profile, position: 1)
-      }.to raise_error(ActiveRecord::RecordNotUnique)
+      end.to raise_error(ActiveRecord::RecordNotUnique)
     end
   end
 end

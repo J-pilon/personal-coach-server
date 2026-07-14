@@ -23,9 +23,9 @@ RSpec.describe HabitCompletion, type: :model do
     it 'rejects a duplicate on the same date' do
       completion = create(:habit_completion)
 
-      expect {
+      expect do
         create(:habit_completion, habit: completion.habit, completed_on: completion.completed_on)
-      }.to raise_error(ActiveRecord::RecordNotUnique)
+      end.to raise_error(ActiveRecord::RecordNotUnique)
     end
   end
 

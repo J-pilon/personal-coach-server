@@ -15,17 +15,17 @@ RSpec.describe SmartGoal, type: :model do
     it 'rejects a second primary uncompleted goal for the same profile' do
       create(:smart_goal, profile: profile, primary: true)
 
-      expect {
+      expect do
         create(:smart_goal, profile: profile, primary: true)
-      }.to raise_error(ActiveRecord::RecordNotUnique)
+      end.to raise_error(ActiveRecord::RecordNotUnique)
     end
 
     it 'allows a new primary once the earlier one is completed' do
       create(:smart_goal, :completed, profile: profile, primary: true)
 
-      expect {
+      expect do
         create(:smart_goal, profile: profile, primary: true)
-      }.not_to raise_error
+      end.not_to raise_error
     end
   end
 

@@ -32,25 +32,25 @@ RSpec.describe NotificationSchedule, type: :model do
     it 'rejects a second active row for the same (profile, kind)' do
       create(:notification_schedule, profile: profile)
 
-      expect {
+      expect do
         create(:notification_schedule, profile: profile)
-      }.to raise_error(ActiveRecord::RecordNotUnique)
+      end.to raise_error(ActiveRecord::RecordNotUnique)
     end
 
     it 'allows a new active row when the earlier one is inactive' do
       create(:notification_schedule, :inactive, profile: profile)
 
-      expect {
+      expect do
         create(:notification_schedule, profile: profile)
-      }.not_to raise_error
+      end.not_to raise_error
     end
 
     it 'allows multiple inactive rows for the same (profile, kind)' do
       create(:notification_schedule, :inactive, profile: profile)
 
-      expect {
+      expect do
         create(:notification_schedule, :inactive, profile: profile)
-      }.not_to raise_error
+      end.not_to raise_error
     end
   end
 end
