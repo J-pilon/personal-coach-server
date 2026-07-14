@@ -55,7 +55,8 @@ module Api
       def update_smart_goal_params
         params.require(:smart_goal).permit(
           :title, :description, :timeframe, :specific, :measurable,
-          :achievable, :relevant, :time_bound, :completed
+          :achievable, :relevant, :time_bound, :completed,
+          :primary, :why, :target_date
         )
       end
 

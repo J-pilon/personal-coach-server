@@ -438,6 +438,28 @@ RSpec.describe 'Api::V1::SmartGoals', type: :request do
         expect(response).to have_http_status(:not_found)
       end
     end
+
+    context 'with onboarding v2 fields' do
+      it 'accepts primary, why, target_date, and timeframe' do
+        new_target = (Date.current + 30).iso8601
+        patch api_v1_smart_goal_path(smart_goal),
+              params: {
+                smart_goal: {
+                  primary: true,
+                  why: 'because it matters',
+                  target_date: new_target,
+                  timeframe: '3_months'
+                }
+              }
+
+        expect(response).to have_http_status(:ok)
+        smart_goal.reload
+        expect(smart_goal.primary).to be(true)
+        expect(smart_goal.why).to eq('because it matters')
+        expect(smart_goal.target_date.to_date.iso8601).to eq(new_target)
+        expect(smart_goal.timeframe).to eq('3_months')
+      end
+    end
   end
 
   describe 'DELETE /api/v1/smart_goals/:id' do
