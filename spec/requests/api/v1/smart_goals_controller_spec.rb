@@ -217,6 +217,18 @@ RSpec.describe 'Api::V1::SmartGoals', type: :request do
         end
       end
 
+      it 'persists primary and why when provided (needed for onboarding resume)' do
+        params_with_primary = valid_params.deep_merge(
+          smart_goal: { primary: true, why: 'because it matters' }
+        )
+
+        post api_v1_smart_goals_path, params: params_with_primary
+
+        expect(response).to have_http_status(:created)
+        expect(response.parsed_body['primary']).to be(true)
+        expect(response.parsed_body['why']).to eq('because it matters')
+      end
+
       it 'ignores any client-supplied target_date and derives its own' do
         bogus = 10.years.from_now.to_date.iso8601
         params_with_target = valid_params.deep_merge(smart_goal: { target_date: bogus })
