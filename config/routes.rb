@@ -46,7 +46,7 @@ Rails.application.routes.draw do
       resources :device_tokens, only: %i[create destroy]
       resource :notification_preferences, only: %i[show update]
 
-      resources :habits, only: %i[create]
+      resources :habits, only: %i[index create]
       resources :habit_completions, only: %i[create]
       resources :notification_schedules, only: %i[create]
 
