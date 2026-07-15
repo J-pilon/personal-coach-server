@@ -79,4 +79,39 @@ RSpec.describe 'Api::V1::Habits', type: :request do
       expect(response.parsed_body['errors']).to be_present
     end
   end
+
+  describe 'GET /api/v1/habits' do
+    let!(:habit1) { create(:habit, profile: profile, smart_goal: smart_goal, position: 1) }
+    let!(:habit2) { create(:habit, profile: profile, smart_goal: smart_goal, position: 2) }
+
+    it 'returns the profile\'s active habits ordered by position' do
+      archived = create(:habit, profile: profile, smart_goal: smart_goal, position: 3)
+      archived.update!(archived_at: Time.current)
+
+      get api_v1_habits_path
+
+      expect(response).to have_http_status(:ok)
+      ids = response.parsed_body.pluck('id')
+      expect(ids).to eq([habit1.id, habit2.id])
+    end
+
+    it 'scopes results to smart_goal_id when provided' do
+      other_goal = create(:smart_goal, profile: profile)
+      create(:habit, profile: profile, smart_goal: other_goal, position: 1)
+
+      get api_v1_habits_path, params: { smart_goal_id: smart_goal.id }
+
+      expect(response.parsed_body.pluck('smart_goal_id').uniq).to eq([smart_goal.id])
+    end
+
+    it 'does not return another profile\'s habits' do
+      other_profile = create(:user).profile
+      other_goal = create(:smart_goal, profile: other_profile)
+      create(:habit, profile: other_profile, smart_goal: other_goal, position: 1)
+
+      get api_v1_habits_path
+
+      expect(response.parsed_body.pluck('id')).to contain_exactly(habit1.id, habit2.id)
+    end
+  end
 end

@@ -7,6 +7,12 @@ module Api
 
       before_action :authenticate_api_v1_user!
 
+      def index
+        habits = current_api_v1_profile.habits.active.order(:position)
+        habits = habits.where(smart_goal_id: params[:smart_goal_id]) if params[:smart_goal_id].present?
+        render json: habits
+      end
+
       def create
         smart_goal = current_api_v1_profile.smart_goals.find_by(id: params[:smart_goal_id])
         return render_not_found('SmartGoal not found') unless smart_goal
