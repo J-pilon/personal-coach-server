@@ -11,7 +11,7 @@ RSpec.describe 'Api::V1::NotificationSchedules', type: :request do
   describe 'POST /api/v1/notification_schedules' do
     it 'creates an active daily_check_in schedule' do
       post api_v1_notification_schedules_path,
-           params: { local_time: '07:00', timezone: 'America/Los_Angeles' },
+           params: { notification_schedule: { local_time: '07:00', timezone: 'America/Los_Angeles' } },
            as: :json
 
       expect(response).to have_http_status(:created)
@@ -22,7 +22,7 @@ RSpec.describe 'Api::V1::NotificationSchedules', type: :request do
       first = create(:notification_schedule, profile: profile, local_time: '08:00', active: true)
 
       post api_v1_notification_schedules_path,
-           params: { local_time: '12:00', timezone: 'UTC' },
+           params: { notification_schedule: { local_time: '12:00', timezone: 'UTC' } },
            as: :json
 
       expect(response).to have_http_status(:created)
@@ -32,7 +32,7 @@ RSpec.describe 'Api::V1::NotificationSchedules', type: :request do
 
     it 'rejects invalid timezone' do
       post api_v1_notification_schedules_path,
-           params: { local_time: '07:00', timezone: 'Not/AZone' },
+           params: { notification_schedule: { local_time: '07:00', timezone: 'Not/AZone' } },
            as: :json
 
       expect(response).to have_http_status(:unprocessable_content)
