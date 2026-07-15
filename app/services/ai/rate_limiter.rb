@@ -2,7 +2,7 @@
 
 module Ai
   class RateLimiter
-    DAILY_LIMIT = 3
+    DAILY_LIMIT = 10
     LIMIT_WINDOW = 24.hours
     DENIAL_WINDOW = 14.days
 

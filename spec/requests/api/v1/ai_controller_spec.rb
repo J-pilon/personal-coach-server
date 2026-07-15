@@ -191,7 +191,7 @@ RSpec.describe 'Api::V1::AiController', type: :request do
         json_response = response.parsed_body
         usage_info = json_response['usage_info']
         expect(usage_info).to include('using_own_key', 'remaining')
-        expect(usage_info['remaining']).to eq(2) # Should have 2 remaining after this request
+        expect(usage_info['remaining']).to eq(9) # Should have 9 remaining after this request
       end
     end
 
