@@ -23,8 +23,8 @@ RSpec.describe Ai::RateLimiter do
         result = described_class.check_and_record(profile)
 
         expect(result[:using_own_key]).to be false
-        expect(result[:remaining]).to eq(2)
-        expect(result[:total_limit]).to eq(3)
+        expect(result[:remaining]).to eq(9)
+        expect(result[:total_limit]).to eq(10)
         expect(result[:reset_time]).to be_present
         expect(result[:error]).to be_nil
         expect(result[:reason]).to be_nil
@@ -41,17 +41,15 @@ RSpec.describe Ai::RateLimiter do
         result = described_class.check_and_record(profile)
 
         expect(result[:using_own_key]).to be false
-        expect(result[:remaining]).to eq(0)
-        expect(result[:total_limit]).to eq(3)
+        expect(result[:remaining]).to eq(7)
+        expect(result[:total_limit]).to eq(10)
         expect(result[:error]).to be_nil
       end
     end
 
     context 'when user has reached the daily limit' do
       before do
-        described_class.check_and_record(profile)
-        described_class.check_and_record(profile)
-        described_class.check_and_record(profile)
+        10.times { described_class.check_and_record(profile) }
       end
 
       it 'denies the request with error and reason' do
@@ -59,9 +57,9 @@ RSpec.describe Ai::RateLimiter do
 
         expect(result[:using_own_key]).to be false
         expect(result[:remaining]).to eq(0)
-        expect(result[:total_limit]).to eq(3)
+        expect(result[:total_limit]).to eq(10)
         expect(result[:reset_time]).to be_present
-        expect(result[:error]).to include('3-request AI limit')
+        expect(result[:error]).to include('10-request AI limit')
         expect(result[:reason]).to eq('daily_limit_exceeded')
       end
     end
@@ -91,8 +89,8 @@ RSpec.describe Ai::RateLimiter do
       it 'returns correct usage info' do
         info = rate_limiter.usage_info
         expect(info[:using_own_key]).to be false
-        expect(info[:remaining]).to eq(3)
-        expect(info[:total_limit]).to eq(3)
+        expect(info[:remaining]).to eq(10)
+        expect(info[:total_limit]).to eq(10)
       end
     end
 
@@ -103,7 +101,7 @@ RSpec.describe Ai::RateLimiter do
 
       it 'returns correct remaining count' do
         info = rate_limiter.usage_info
-        expect(info[:remaining]).to eq(2)
+        expect(info[:remaining]).to eq(9)
       end
     end
   end
@@ -114,7 +112,7 @@ RSpec.describe Ai::RateLimiter do
 
     context 'when user has no requests' do
       it 'returns the full limit' do
-        expect(rate_limiter.remaining_requests).to eq(3)
+        expect(rate_limiter.remaining_requests).to eq(10)
       end
     end
 
@@ -125,13 +123,13 @@ RSpec.describe Ai::RateLimiter do
       end
 
       it 'returns the remaining count' do
-        expect(rate_limiter.remaining_requests).to eq(1)
+        expect(rate_limiter.remaining_requests).to eq(8)
       end
     end
 
     context 'when user has exceeded the limit' do
       before do
-        5.times { rate_limiter.record_request }
+        10.times { rate_limiter.record_request }
       end
 
       it 'returns 0' do
