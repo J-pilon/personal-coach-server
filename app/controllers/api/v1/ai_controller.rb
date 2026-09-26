@@ -12,17 +12,18 @@ module Api
         user_provided_key = params[:user_provided_key]
 
         if input.blank?
-          render json: { error: 'Input is required' }, status: :bad_request
+          render_standard_error(message: 'Input is required', status: :bad_request)
           return
         end
 
         result = Ai::RateLimiter.check_and_record(current_api_v1_profile, user_provided_key)
 
         if result[:error].present?
-          render json: {
-            error: result[:error],
-            reason: result[:reason]
-          }, status: :too_many_requests
+          render_standard_error(
+            message: result[:error],
+            status: :too_many_requests,
+            details: { reason: result[:reason] }
+          )
           return
         end
 
@@ -56,10 +57,11 @@ module Api
         result = Ai::RateLimiter.check_and_record(profile, user_provided_key)
 
         if result[:error].present?
-          render json: {
-            error: result[:error],
-            reason: result[:reason]
-          }, status: :too_many_requests
+          render_standard_error(
+            message: result[:error],
+            status: :too_many_requests,
+            details: { reason: result[:reason] }
+          )
           return
         end
 
@@ -75,10 +77,10 @@ module Api
           usage_info: result
         }
       rescue ActiveRecord::RecordNotFound
-        render json: { error: 'Profile not found' }, status: :not_found
+        render_standard_error(message: 'Profile not found', status: :not_found)
       rescue StandardError => e
         Rails.logger.error "Task suggestions error: #{e.message}"
-        render json: { error: 'Failed to generate task suggestions' }, status: :internal_server_error
+        render_standard_error(message: 'Failed to generate task suggestions', status: :internal_server_error)
       end
     end
   end

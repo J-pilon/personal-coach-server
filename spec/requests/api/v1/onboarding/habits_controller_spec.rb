@@ -42,6 +42,11 @@ RSpec.describe 'Api::V1::Onboarding::Habits', type: :request do
            as: :json
 
       expect(response).to have_http_status(:unprocessable_content)
+      json = response.parsed_body
+      expect(json['error']).to be_present
+      expect(json['error']['code']).to eq('')
+      expect(json['error']['message']).to eq('position must be 1..3')
+      expect(json['error']['details']).to be_nil
     end
 
     it 'returns not found for another user\'s goal' do
@@ -50,6 +55,11 @@ RSpec.describe 'Api::V1::Onboarding::Habits', type: :request do
       post api_v1_onboarding_habits_suggest_path, params: { smart_goal_id: other_goal.id }, as: :json
 
       expect(response).to have_http_status(:not_found)
+      json = response.parsed_body
+      expect(json['error']).to be_present
+      expect(json['error']['code']).to eq('')
+      expect(json['error']['message']).to eq('SmartGoal not found')
+      expect(json['error']['details']).to be_nil
     end
   end
 end

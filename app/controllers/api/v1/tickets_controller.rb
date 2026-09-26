@@ -19,7 +19,7 @@ module Api
         if @ticket.persisted?
           render json: @ticket, status: :created
         else
-          render json: { errors: @ticket.errors.full_messages }, status: :unprocessable_entity
+          render_validation_error(record: @ticket, status: :unprocessable_entity)
         end
       end
 
@@ -28,7 +28,7 @@ module Api
       def set_ticket
         @ticket = current_api_v1_profile.tickets.find(params[:id])
       rescue ActiveRecord::RecordNotFound
-        render json: { error: 'Ticket not found' }, status: :not_found
+        render_standard_error(message: 'Ticket not found', status: :not_found)
       end
 
       def ticket_params

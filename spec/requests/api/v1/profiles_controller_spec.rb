@@ -27,9 +27,12 @@ RSpec.describe 'Api::V1::Profiles', type: :request do
     end
 
     context 'when profile does not exist' do
-      it 'returns not found status' do
+      it 'returns not found status with error envelope' do
         get api_v1_profile_path(999_999)
         expect(response).to have_http_status(:not_found)
+        json = response.parsed_body
+        expect(json['error']['code']).to eq('')
+        expect(json['error']['message']).to eq('Profile could not be found.')
       end
     end
   end
@@ -106,17 +109,14 @@ RSpec.describe 'Api::V1::Profiles', type: :request do
         }
       end
 
-      it 'returns unprocessable entity status' do
+      it 'returns unprocessable entity status with error envelope' do
         patch api_v1_profile_path(profile), params: invalid_params
 
         expect(response).to have_http_status(:unprocessable_entity)
-      end
-
-      it 'returns error messages' do
-        patch api_v1_profile_path(profile), params: invalid_params
-
-        json_response = response.parsed_body
-        expect(json_response['errors']).to include('Onboarding status is not included in the list')
+        json = response.parsed_body
+        expect(json['error']['code']).to eq('')
+        expect(json['error']['message']).to include('Invalid onboarding state')
+        expect(json['error']['details']).to be_present
       end
     end
   end

@@ -275,7 +275,9 @@ RSpec.describe 'Api::V1::SmartGoals', type: :request do
           post api_v1_smart_goals_path, params: invalid_params
 
           json_response = response.parsed_body
-          expect(json_response['errors']).to include("Title can't be blank")
+          expect(json_response['error']['code']).to eq('')
+          expect(json_response['error']['message']).to include("Title can't be blank")
+          expect(json_response['error']['details']).to be_present
         end
       end
 
@@ -306,7 +308,9 @@ RSpec.describe 'Api::V1::SmartGoals', type: :request do
           post api_v1_smart_goals_path, params: invalid_params
 
           json_response = response.parsed_body
-          expect(json_response['errors']).to include('Timeframe is not included in the list')
+          expect(json_response['error']['code']).to eq('')
+          expect(json_response['error']['message']).to include('Timeframe is not included in the list')
+          expect(json_response['error']['details']).to be_present
         end
       end
 
@@ -336,7 +340,9 @@ RSpec.describe 'Api::V1::SmartGoals', type: :request do
           post api_v1_smart_goals_path, params: invalid_params
 
           json_response = response.parsed_body
-          expect(json_response['errors']).to include("Specific can't be blank")
+          expect(json_response['error']['code']).to eq('')
+          expect(json_response['error']['message']).to include("Specific can't be blank")
+          expect(json_response['error']['details']).to be_present
         end
       end
     end
@@ -418,7 +424,9 @@ RSpec.describe 'Api::V1::SmartGoals', type: :request do
         patch api_v1_smart_goal_path(smart_goal), params: invalid_params
 
         json_response = response.parsed_body
-        expect(json_response['errors']).to include('Timeframe is not included in the list')
+        expect(json_response['error']['code']).to eq('')
+        expect(json_response['error']['message']).to include('Timeframe is not included in the list')
+        expect(json_response['error']['details']).to be_present
       end
 
       it 'does not update the smart goal' do

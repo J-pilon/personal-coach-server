@@ -42,7 +42,7 @@ Rails.application.routes.draw do
       post 'ai/suggested_tasks', to: 'ai#suggested_tasks'
 
       # Job status endpoint
-      get 'jobs/:id', to: 'job_status#show'
+      get 'jobs/:id', to: 'job_status#show', as: :job_status
       resources :device_tokens, only: %i[create destroy]
       resource :notification_preferences, only: %i[show update]
 

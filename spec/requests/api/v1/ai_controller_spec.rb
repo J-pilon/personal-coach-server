@@ -75,7 +75,10 @@ RSpec.describe 'Api::V1::AiController', type: :request do
 
         expect(response).to have_http_status(:bad_request)
         json_response = response.parsed_body
-        expect(json_response['error']).to eq('Input is required')
+        expect(json_response['error']).to be_present
+        expect(json_response['error']['code']).to eq('')
+        expect(json_response['error']['message']).to eq('Input is required')
+        expect(json_response['error']['details']).to be_nil
       end
     end
 
@@ -97,8 +100,10 @@ RSpec.describe 'Api::V1::AiController', type: :request do
 
         expect(response).to have_http_status(:too_many_requests)
         json_response = response.parsed_body
-        expect(json_response['error']).to include('3-request AI limit')
-        expect(json_response['reason']).to eq('daily_limit_exceeded')
+        expect(json_response['error']).to be_present
+        expect(json_response['error']['code']).to eq('')
+        expect(json_response['error']['message']).to include('3-request AI limit')
+        expect(json_response['error']['details']['reason']).to eq('daily_limit_exceeded')
       end
     end
 
@@ -237,8 +242,10 @@ RSpec.describe 'Api::V1::AiController', type: :request do
 
         expect(response).to have_http_status(:too_many_requests)
         json_response = response.parsed_body
-        expect(json_response['error']).to include('3-request AI limit')
-        expect(json_response['reason']).to eq('daily_limit_exceeded')
+        expect(json_response['error']).to be_present
+        expect(json_response['error']['code']).to eq('')
+        expect(json_response['error']['message']).to include('3-request AI limit')
+        expect(json_response['error']['details']['reason']).to eq('daily_limit_exceeded')
       end
     end
 
@@ -248,7 +255,10 @@ RSpec.describe 'Api::V1::AiController', type: :request do
 
         expect(response).to have_http_status(:not_found)
         json_response = response.parsed_body
-        expect(json_response['error']).to eq('Profile not found')
+        expect(json_response['error']).to be_present
+        expect(json_response['error']['code']).to eq('')
+        expect(json_response['error']['message']).to eq('Profile not found')
+        expect(json_response['error']['details']).to be_nil
       end
     end
 
@@ -263,7 +273,10 @@ RSpec.describe 'Api::V1::AiController', type: :request do
 
         expect(response).to have_http_status(:internal_server_error)
         json_response = response.parsed_body
-        expect(json_response['error']).to eq('Failed to generate task suggestions')
+        expect(json_response['error']).to be_present
+        expect(json_response['error']['code']).to eq('')
+        expect(json_response['error']['message']).to eq('Failed to generate task suggestions')
+        expect(json_response['error']['details']).to be_nil
       end
     end
   end
