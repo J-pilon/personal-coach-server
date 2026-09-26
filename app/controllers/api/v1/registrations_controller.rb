@@ -23,9 +23,11 @@ module Api
             }
           }, status: :ok
         else
-          render json: {
-            status: { message: "User couldn't be created successfully. #{resource.errors.full_messages.to_sentence}" }
-          }, status: :unprocessable_entity
+          render_standard_error(
+            message: resource.errors.full_messages.to_sentence,
+            status: :unprocessable_entity,
+            details: resource.errors.to_hash
+          )
         end
       end
 
