@@ -13,13 +13,13 @@ module Api
                           "job_status=#{job_status}, job_id=#{job_id}"
 
         if job_status.blank?
-          render json: { error: 'Job not found' }, status: :not_found
+          render_standard_error(message: 'Job not found', status: :not_found)
         else
           render json: build_job_status_response(job_id, job_status)
         end
       rescue StandardError => e
         log_job_status_error(e)
-        render json: { error: 'Failed to get job status' }, status: :internal_server_error
+        render_standard_error(message: 'Failed to get job status', status: :internal_server_error)
       end
 
       private
