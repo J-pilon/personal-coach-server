@@ -18,7 +18,7 @@ RSpec.describe Profile, type: :model do
     subject { build(:profile) }
 
     it do
-      is_expected.to validate_inclusion_of(:onboarding_status)
+      expect(subject).to validate_inclusion_of(:onboarding_status)
         .in_array(%w[incomplete complete])
         .with_message('Invalid onboarding state')
     end
