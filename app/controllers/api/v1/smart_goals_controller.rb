@@ -26,7 +26,7 @@ module Api
         if result.success?
           render json: result.smart_goal, status: :created
         else
-          render json: { errors: result.errors }, status: :unprocessable_entity
+          render_validation_error(record: result.smart_goal, status: :unprocessable_entity)
         end
       end
 
@@ -34,7 +34,7 @@ module Api
         if @smart_goal.update(update_smart_goal_params)
           render json: @smart_goal
         else
-          render json: { errors: @smart_goal.errors.full_messages }, status: :unprocessable_entity
+          render_validation_error(record: @smart_goal, status: :unprocessable_entity)
         end
       end
 
