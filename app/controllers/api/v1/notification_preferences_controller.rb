@@ -13,9 +13,7 @@ module Api
         if current_notification_preference.update(notification_preference_params)
           render json: notification_preference_response
         else
-          render json: {
-            errors: current_notification_preference.errors.full_messages
-          }, status: :unprocessable_content
+          render_validation_error(record: current_notification_preference)
         end
       end
 
