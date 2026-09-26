@@ -8,7 +8,7 @@ module Api
       def create
         attrs = habit_completion_params
         habit = current_api_v1_profile.habits.find_by(id: attrs[:habit_id])
-        return render json: { error: 'Habit not found' }, status: :not_found unless habit
+        return render_standard_error(message: 'Habit not found', status: :not_found) unless habit
 
         completed_on = parse_date(attrs[:completed_on]) || Date.current
 
@@ -20,7 +20,7 @@ module Api
 
         render json: completion, status: :ok
       rescue ActiveRecord::RecordInvalid => e
-        render json: { errors: e.record.errors.full_messages }, status: :unprocessable_content
+        render_validation_error(record: e.record)
       end
 
       private
