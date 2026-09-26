@@ -58,7 +58,10 @@ RSpec.describe Api::V1::TicketsController, type: :request do
         post '/api/v1/tickets', params: invalid_params
 
         expect(response).to have_http_status(:unprocessable_entity)
-        expect(response.parsed_body['errors']).to include("Title can't be blank")
+        json = response.parsed_body
+        expect(json['error']['code']).to eq('')
+        expect(json['error']['message']).to include("Title can't be blank")
+        expect(json['error']['details']).to be_present
       end
     end
 
@@ -89,7 +92,9 @@ RSpec.describe Api::V1::TicketsController, type: :request do
         get '/api/v1/tickets/999999'
 
         expect(response).to have_http_status(:not_found)
-        expect(response.parsed_body['error']).to eq('Ticket not found')
+        json = response.parsed_body
+        expect(json['error']['code']).to eq('')
+        expect(json['error']['message']).to eq('Ticket not found')
       end
     end
 
