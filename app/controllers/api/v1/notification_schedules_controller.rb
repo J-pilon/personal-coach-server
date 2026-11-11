@@ -24,7 +24,7 @@ module Api
 
         render json: schedule, status: :created
       rescue ActiveRecord::RecordInvalid => e
-        render json: { errors: e.record.errors.full_messages }, status: :unprocessable_content
+        render_validation_error(record: e.record)
       end
 
       private

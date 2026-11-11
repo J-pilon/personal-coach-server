@@ -95,7 +95,11 @@ RSpec.describe 'Api::V1::Passwords', type: :request do
         }
 
         expect(response).to have_http_status(:unprocessable_entity)
-        expect(response.parsed_body.dig('status', 'message')).to match(/expired/i)
+        json = response.parsed_body
+        expect(json['error']).to be_present
+        expect(json['error']['code']).to eq('')
+        expect(json['error']['message']).to match(/expired/i)
+        expect(json['error']['details']).to be_present
 
         user.reload
         expect(user.valid_password?('oldpassword123')).to be true
@@ -113,7 +117,11 @@ RSpec.describe 'Api::V1::Passwords', type: :request do
         }
 
         expect(response).to have_http_status(:unprocessable_entity)
-        expect(response.parsed_body.dig('status', 'message')).to match(/invalid/i)
+        json = response.parsed_body
+        expect(json['error']).to be_present
+        expect(json['error']['code']).to eq('')
+        expect(json['error']['message']).to match(/invalid/i)
+        expect(json['error']['details']).to be_present
 
         user.reload
         expect(user.valid_password?('oldpassword123')).to be true
@@ -131,7 +139,11 @@ RSpec.describe 'Api::V1::Passwords', type: :request do
         }
 
         expect(response).to have_http_status(:unprocessable_entity)
-        expect(response.parsed_body.dig('status', 'message')).to match(/confirmation/i)
+        json = response.parsed_body
+        expect(json['error']).to be_present
+        expect(json['error']['code']).to eq('')
+        expect(json['error']['message']).to match(/confirmation/i)
+        expect(json['error']['details']).to be_present
 
         user.reload
         expect(user.valid_password?('oldpassword123')).to be true

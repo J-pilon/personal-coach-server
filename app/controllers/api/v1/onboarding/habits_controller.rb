@@ -8,13 +8,16 @@ module Api
 
         def suggest
           smart_goal = current_api_v1_profile.smart_goals.find_by(id: params[:smart_goal_id])
-          return render json: { error: 'SmartGoal not found' }, status: :not_found unless smart_goal
+          return render_standard_error(message: 'SmartGoal not found', status: :not_found) unless smart_goal
 
           exclude = Array(params[:exclude])
           position = params[:position].presence&.to_i
 
           if position && !(1..3).cover?(position)
-            return render json: { errors: ['position must be 1..3'] }, status: :unprocessable_content
+            return render_standard_error(
+              message: 'position must be 1..3',
+              status: :unprocessable_content
+            )
           end
 
           ai_request = AiRequest.create!(

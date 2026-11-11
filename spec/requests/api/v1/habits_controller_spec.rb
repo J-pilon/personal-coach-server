@@ -46,6 +46,11 @@ RSpec.describe 'Api::V1::Habits', type: :request do
 
       expect(response).to have_http_status(:unprocessable_content)
       expect(Habit.count).to eq(0)
+      json = response.parsed_body
+      expect(json['error']).to be_present
+      expect(json['error']['code']).to eq('')
+      expect(json['error']['message']).to eq('At most 3 habits allowed')
+      expect(json['error']['details']).to be_nil
     end
 
     it 'rejects when goal already has 3 active habits' do
@@ -56,6 +61,11 @@ RSpec.describe 'Api::V1::Habits', type: :request do
       post api_v1_habits_path, params: params, as: :json
 
       expect(response).to have_http_status(:unprocessable_content)
+      json = response.parsed_body
+      expect(json['error']).to be_present
+      expect(json['error']['code']).to eq('')
+      expect(json['error']['message']).to eq('Goal already has the maximum number of habits')
+      expect(json['error']['details']).to be_nil
     end
 
     it 'returns not found for another user\'s goal' do
@@ -65,6 +75,11 @@ RSpec.describe 'Api::V1::Habits', type: :request do
       post api_v1_habits_path, params: params, as: :json
 
       expect(response).to have_http_status(:not_found)
+      json = response.parsed_body
+      expect(json['error']).to be_present
+      expect(json['error']['code']).to eq('')
+      expect(json['error']['message']).to eq('SmartGoal not found')
+      expect(json['error']['details']).to be_nil
     end
 
     it 'returns validation errors on invalid habit' do
@@ -76,7 +91,12 @@ RSpec.describe 'Api::V1::Habits', type: :request do
       post api_v1_habits_path, params: params, as: :json
 
       expect(response).to have_http_status(:unprocessable_content)
-      expect(response.parsed_body['errors']).to be_present
+      json = response.parsed_body
+      expect(json['error']).to be_present
+      expect(json['error']['code']).to eq('')
+      expect(json['error']['message']).to include("Title can't be blank")
+      expect(json['error']['details']).to be_present
+      expect(json['error']['details']['title']).to include("can't be blank")
     end
   end
 

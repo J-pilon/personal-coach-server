@@ -17,12 +17,7 @@ module Api
 
         unless user_params
           Rails.logger.info 'No user params found, returning unauthorized'
-          return render json: {
-            status: {
-              code: 401,
-              message: 'Invalid parameters'
-            }
-          }, status: :unauthorized
+          return render_standard_error(message: 'Invalid parameters', status: :unauthorized)
         end
 
         # Find and authenticate user
@@ -38,12 +33,7 @@ module Api
         else
           Rails.logger.info "Authentication failed - user: #{user.inspect}, " \
                             "password_valid: #{user&.valid_password?(user_params[:password])}"
-          render json: {
-            status: {
-              code: 401,
-              message: 'Invalid email or password.'
-            }
-          }, status: :unauthorized
+          render_standard_error(message: 'Invalid email or password.', status: :unauthorized)
         end
       end
 
@@ -71,10 +61,7 @@ module Api
 
           # Check if Authorization header has the correct format
           unless auth_header.start_with?('Bearer ')
-            return render json: {
-              status: 401,
-              message: "Couldn't find an active session."
-            }, status: :unauthorized
+            return render_standard_error(message: "Couldn't find an active session.", status: :unauthorized)
           end
 
           begin
@@ -95,10 +82,7 @@ module Api
             message: 'Logged out successfully.'
           }, status: :ok
         else
-          render json: {
-            status: 401,
-            message: "Couldn't find an active session."
-          }, status: :unauthorized
+          render_standard_error(message: "Couldn't find an active session.", status: :unauthorized)
         end
       end
 

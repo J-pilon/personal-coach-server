@@ -24,9 +24,7 @@ module Api
             device_token: device_token.as_json(only: %i[id platform active])
           }, status: :ok
         else
-          render json: {
-            errors: device_token.errors.full_messages
-          }, status: :unprocessable_content
+          render_validation_error(record: device_token)
         end
       end
 

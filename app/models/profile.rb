@@ -33,7 +33,7 @@ class Profile < ApplicationRecord
     )
   }
 
-  validates :onboarding_status, inclusion: { in: %w[incomplete complete] }
+  validates :onboarding_status, inclusion: { in: %w[incomplete complete], message: 'Invalid onboarding state' }
   validates :timezone, inclusion: {
     in: %w[Pacific/Honolulu America/Anchorage America/Los_Angeles America/Denver America/Chicago America/New_York
            America/Halifax America/Sao_Paulo Atlantic/Reykjavik Europe/London Europe/Paris Europe/Berlin Europe/Moscow

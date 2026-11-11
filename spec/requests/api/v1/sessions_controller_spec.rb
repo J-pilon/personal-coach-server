@@ -76,8 +76,8 @@ RSpec.describe 'Api::V1::Sessions', type: :request do
           post api_v1_user_session_path, params: invalid_params
 
           json_response = response.parsed_body
-          expect(json_response['status']['code']).to eq(401)
-          expect(json_response['status']['message']).to eq('Invalid email or password.')
+          expect(json_response['error']['code']).to eq('')
+          expect(json_response['error']['message']).to eq('Invalid email or password.')
         end
       end
 
@@ -100,8 +100,8 @@ RSpec.describe 'Api::V1::Sessions', type: :request do
           post api_v1_user_session_path, params: invalid_params
 
           json_response = response.parsed_body
-          expect(json_response['status']['code']).to eq(401)
-          expect(json_response['status']['message']).to eq('Invalid email or password.')
+          expect(json_response['error']['code']).to eq('')
+          expect(json_response['error']['message']).to eq('Invalid email or password.')
         end
       end
 
@@ -189,8 +189,8 @@ RSpec.describe 'Api::V1::Sessions', type: :request do
         delete destroy_api_v1_user_session_path, headers: { 'Authorization' => 'Bearer ' }
 
         json_response = response.parsed_body
-        expect(json_response['status']).to eq(401)
-        expect(json_response['message']).to eq("Couldn't find an active session.")
+        expect(json_response['error']['code']).to eq('')
+        expect(json_response['error']['message']).to eq("Couldn't find an active session.")
       end
     end
 
@@ -204,8 +204,8 @@ RSpec.describe 'Api::V1::Sessions', type: :request do
         delete destroy_api_v1_user_session_path
 
         json_response = response.parsed_body
-        expect(json_response['status']).to eq(401)
-        expect(json_response['message']).to eq("Couldn't find an active session.")
+        expect(json_response['error']['code']).to eq('')
+        expect(json_response['error']['message']).to eq("Couldn't find an active session.")
       end
     end
 

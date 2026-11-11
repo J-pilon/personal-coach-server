@@ -47,7 +47,7 @@ RSpec.describe 'DeviceTokens', type: :request do
       post '/api/v1/device_tokens', params: invalid_params
 
       expect(response).to have_http_status(:unprocessable_content)
-      expect(response.parsed_body['errors']).to include('Platform is not included in the list')
+      expect(response.parsed_body['error']['message']).to include('Platform is not included in the list')
     end
   end
 

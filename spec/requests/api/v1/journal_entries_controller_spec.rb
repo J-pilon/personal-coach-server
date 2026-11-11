@@ -203,7 +203,12 @@ RSpec.describe 'Api::V1::JournalEntries', type: :request do
           .not_to change(JournalEntry, :count)
 
         expect(response).to have_http_status(:unprocessable_entity)
-        expect(response.parsed_body['errors']).to include("Body can't be blank")
+        json = response.parsed_body
+        expect(json['error']).to be_present
+        expect(json['error']['code']).to eq('')
+        expect(json['error']['message']).to include("Body can't be blank")
+        expect(json['error']['details']).to be_present
+        expect(json['error']['details']['body']).to include("can't be blank")
       end
 
       it 'returns 422 for an unknown entry_type' do
@@ -212,7 +217,11 @@ RSpec.describe 'Api::V1::JournalEntries', type: :request do
         post api_v1_journal_journal_entries_path, params: params
 
         expect(response).to have_http_status(:unprocessable_entity)
-        expect(response.parsed_body['errors']).to include('Entry type is not included in the list')
+        json = response.parsed_body
+        expect(json['error']).to be_present
+        expect(json['error']['code']).to eq('')
+        expect(json['error']['message']).to eq('Entry type is not included in the list')
+        expect(json['error']['details']).to be_nil
       end
     end
   end
@@ -242,14 +251,23 @@ RSpec.describe 'Api::V1::JournalEntries', type: :request do
         patch api_v1_journal_journal_entry_path(entry), params: { journal_entry: { body: '' } }
 
         expect(response).to have_http_status(:unprocessable_entity)
-        expect(response.parsed_body['errors']).to include("Body can't be blank")
+        json = response.parsed_body
+        expect(json['error']).to be_present
+        expect(json['error']['code']).to eq('')
+        expect(json['error']['message']).to include("Body can't be blank")
+        expect(json['error']['details']).to be_present
+        expect(json['error']['details']['body']).to include("can't be blank")
       end
 
       it 'returns 422 for an unknown entry_type' do
         patch api_v1_journal_journal_entry_path(entry), params: { journal_entry: { entry_type: 'rant' } }
 
         expect(response).to have_http_status(:unprocessable_entity)
-        expect(response.parsed_body['errors']).to include('Entry type is not included in the list')
+        json = response.parsed_body
+        expect(json['error']).to be_present
+        expect(json['error']['code']).to eq('')
+        expect(json['error']['message']).to eq('Entry type is not included in the list')
+        expect(json['error']['details']).to be_nil
       end
 
       it 'returns 404 for an entry belonging to another profile' do

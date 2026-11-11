@@ -220,7 +220,9 @@ RSpec.describe 'Api::V1::Tasks', type: :request do
           post api_v1_tasks_path, params: invalid_params
 
           json_response = response.parsed_body
-          expect(json_response['errors']).to include("Title can't be blank")
+          expect(json_response['error']['code']).to eq('')
+          expect(json_response['error']['message']).to include("Title can't be blank")
+          expect(json_response['error']['details']).to be_present
         end
       end
 
@@ -383,7 +385,8 @@ RSpec.describe 'Api::V1::Tasks', type: :request do
         patch api_v1_task_path(task), params: invalid_params
 
         json_response = response.parsed_body
-        expect(json_response['errors']).to include('Action category is not included in the list')
+        expect(json_response['error']['code']).to eq('')
+        expect(json_response['error']['message']).to include('Action category is not included in the list')
       end
 
       it 'does not update the task' do

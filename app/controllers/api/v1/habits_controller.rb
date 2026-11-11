@@ -15,17 +15,22 @@ module Api
 
       def create
         smart_goal = current_api_v1_profile.smart_goals.find_by(id: params[:smart_goal_id])
-        return render_not_found('SmartGoal not found') unless smart_goal
+        return render_standard_error(message: 'SmartGoal not found', status: :not_found) unless smart_goal
 
         habits_params = params.require(:habits)
         if habits_params.length > MAX_HABITS_PER_GOAL
-          return render_error('At most 3 habits allowed',
-                              :unprocessable_content)
+          return render_standard_error(
+            message: 'At most 3 habits allowed',
+            status: :unprocessable_content
+          )
         end
 
         active_count = smart_goal.habits.active.count
         if active_count + habits_params.length > MAX_HABITS_PER_GOAL
-          return render_error('Goal already has the maximum number of habits', :unprocessable_content)
+          return render_standard_error(
+            message: 'Goal already has the maximum number of habits',
+            status: :unprocessable_content
+          )
         end
 
         created = []
@@ -39,7 +44,7 @@ module Api
 
         render json: created, status: :created
       rescue ActiveRecord::RecordInvalid => e
-        render json: { errors: e.record.errors.full_messages }, status: :unprocessable_content
+        render_validation_error(record: e.record)
       end
 
       private
@@ -49,14 +54,6 @@ module Api
           :title, :frequency, :cue, :minimum_version, :normal_version, :position,
           frequency_config: {}
         ).to_h
-      end
-
-      def render_error(message, status)
-        render json: { errors: [message] }, status: status
-      end
-
-      def render_not_found(message)
-        render json: { error: message }, status: :not_found
       end
     end
   end

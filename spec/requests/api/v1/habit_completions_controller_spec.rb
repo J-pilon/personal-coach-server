@@ -36,6 +36,25 @@ RSpec.describe 'Api::V1::HabitCompletions', type: :request do
       post api_v1_habit_completions_path, params: { habit_completion: { habit_id: other_habit.id } }, as: :json
 
       expect(response).to have_http_status(:not_found)
+      json = response.parsed_body
+      expect(json['error']).to be_present
+      expect(json['error']['code']).to eq('')
+      expect(json['error']['message']).to eq('Habit not found')
+      expect(json['error']['details']).to be_nil
+    end
+
+    it 'returns a validation error for an invalid state value' do
+      post api_v1_habit_completions_path,
+           params: { habit_completion: { habit_id: habit.id, state: 'invalid_state' } },
+           as: :json
+
+      expect(response).to have_http_status(:unprocessable_content)
+      json = response.parsed_body
+      expect(json['error']).to be_present
+      expect(json['error']['code']).to eq('')
+      expect(json['error']['message']).to be_present
+      expect(json['error']['details']).to be_present
+      expect(json['error']['details']['state']).to be_present
     end
   end
 end

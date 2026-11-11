@@ -36,6 +36,12 @@ RSpec.describe 'Api::V1::NotificationSchedules', type: :request do
            as: :json
 
       expect(response).to have_http_status(:unprocessable_content)
+      json = response.parsed_body
+      expect(json['error']).to be_present
+      expect(json['error']['code']).to eq('')
+      expect(json['error']['message']).to be_present
+      expect(json['error']['details']).to be_present
+      expect(json['error']['details']['timezone']).to be_present
     end
   end
 end

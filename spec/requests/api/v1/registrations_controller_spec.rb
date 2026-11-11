@@ -101,7 +101,8 @@ RSpec.describe 'Api::V1::Registrations', type: :request do
           post '/api/v1/signup', params: invalid_params
 
           json_response = response.parsed_body
-          expect(json_response['status']['message']).to include("Email can't be blank")
+          expect(json_response['error']['code']).to eq('')
+          expect(json_response['error']['message']).to include("Email can't be blank")
         end
       end
 
@@ -125,7 +126,8 @@ RSpec.describe 'Api::V1::Registrations', type: :request do
           post '/api/v1/signup', params: invalid_params
 
           json_response = response.parsed_body
-          expect(json_response['status']['message']).to include('Email is invalid')
+          expect(json_response['error']['code']).to eq('')
+          expect(json_response['error']['message']).to include('Email is invalid')
         end
       end
 
@@ -156,7 +158,8 @@ RSpec.describe 'Api::V1::Registrations', type: :request do
           post '/api/v1/signup', params: duplicate_params
 
           json_response = response.parsed_body
-          expect(json_response['status']['message']).to include('Email has already been taken')
+          expect(json_response['error']['code']).to eq('')
+          expect(json_response['error']['message']).to include('Email has already been taken')
         end
       end
 
@@ -179,7 +182,8 @@ RSpec.describe 'Api::V1::Registrations', type: :request do
           post '/api/v1/signup', params: invalid_params
 
           json_response = response.parsed_body
-          expect(json_response['status']['message']).to include("Password can't be blank")
+          expect(json_response['error']['code']).to eq('')
+          expect(json_response['error']['message']).to include("Password can't be blank")
         end
       end
 
@@ -203,7 +207,8 @@ RSpec.describe 'Api::V1::Registrations', type: :request do
           post '/api/v1/signup', params: invalid_params
 
           json_response = response.parsed_body
-          expect(json_response['status']['message']).to include('Password is too short')
+          expect(json_response['error']['code']).to eq('')
+          expect(json_response['error']['message']).to include('Password is too short')
         end
       end
 
@@ -227,7 +232,8 @@ RSpec.describe 'Api::V1::Registrations', type: :request do
           post '/api/v1/signup', params: invalid_params
 
           json_response = response.parsed_body
-          expect(json_response['status']['message']).to include("Password confirmation doesn't match Password")
+          expect(json_response['error']['code']).to eq('')
+          expect(json_response['error']['message']).to include("Password confirmation doesn't match Password")
         end
       end
 
@@ -250,7 +256,8 @@ RSpec.describe 'Api::V1::Registrations', type: :request do
           post '/api/v1/signup', params: invalid_params
 
           json_response = response.parsed_body
-          expect(json_response['status']['message']).to include("Password confirmation can't be blank")
+          expect(json_response['error']['code']).to eq('')
+          expect(json_response['error']['message']).to include("Password confirmation can't be blank")
         end
       end
     end

@@ -9,7 +9,7 @@ module Api
         if current_api_v1_profile.id.to_s == params[:id]
           render json: current_api_v1_profile
         else
-          render json: { errors: 'Profile could not be found.' }, status: :not_found
+          render_standard_error(message: 'Profile could not be found.', status: :not_found)
         end
       end
 
@@ -18,10 +18,10 @@ module Api
           if current_api_v1_profile.update(profile_params)
             render json: current_api_v1_profile
           else
-            render json: { errors: current_api_v1_profile.errors.full_messages }, status: :unprocessable_entity
+            render_validation_error(record: current_api_v1_profile, status: :unprocessable_entity)
           end
         else
-          render json: { errors: 'Profile could not be found.' }, status: :not_found
+          render_standard_error(message: 'Profile could not be found.', status: :not_found)
         end
       end
 
@@ -30,7 +30,7 @@ module Api
           current_api_v1_profile.complete_onboarding!
           render json: current_api_v1_profile
         else
-          render json: { errors: 'Profile could not be found.' }, status: :not_found
+          render_standard_error(message: 'Profile could not be found.', status: :not_found)
         end
       end
 

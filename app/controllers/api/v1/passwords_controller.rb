@@ -32,13 +32,11 @@ module Api
             status: { code: 200, message: 'Password has been reset successfully.' }
           }, status: :ok
         else
-          render json: {
-            status: {
-              code: 422,
-              message: resource.errors.full_messages.to_sentence,
-              errors: resource.errors.as_json
-            }
-          }, status: :unprocessable_entity
+          render_standard_error(
+            message: resource.errors.full_messages.to_sentence,
+            status: :unprocessable_entity,
+            details: resource.errors.as_json
+          )
         end
       end
 

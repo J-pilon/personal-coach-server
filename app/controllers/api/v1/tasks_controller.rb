@@ -25,24 +25,24 @@ module Api
         if @task.save
           render json: @task.as_json(TASK_JSON_OPTIONS), status: :created
         else
-          render json: { errors: @task.errors.full_messages }, status: :unprocessable_entity
+          render_validation_error(record: @task, status: :unprocessable_entity)
         end
       rescue ArgumentError => e
         raise e unless e.message.include?('action_category')
 
-        render json: { errors: ['Action category is not included in the list'] }, status: :unprocessable_entity
+        render_standard_error(message: 'Action category is not included in the list', status: :unprocessable_entity)
       end
 
       def update
         if @task.update(task_params)
           render json: @task.as_json(TASK_JSON_OPTIONS)
         else
-          render json: { errors: @task.errors.full_messages }, status: :unprocessable_entity
+          render_validation_error(record: @task, status: :unprocessable_entity)
         end
       rescue ArgumentError => e
         raise e unless e.message.include?('action_category')
 
-        render json: { errors: ['Action category is not included in the list'] }, status: :unprocessable_entity
+        render_standard_error(message: 'Action category is not included in the list', status: :unprocessable_entity)
       end
 
       def destroy

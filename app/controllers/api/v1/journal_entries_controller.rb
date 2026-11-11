@@ -34,24 +34,24 @@ module Api
         if @entry.persisted?
           render json: @entry.as_json(ENTRY_JSON_OPTIONS), status: :created
         else
-          render json: { errors: @entry.errors.full_messages }, status: :unprocessable_entity
+          render_validation_error(record: @entry, status: :unprocessable_entity)
         end
       rescue ArgumentError => e
         raise e unless e.message.include?('entry_type')
 
-        render json: { errors: ['Entry type is not included in the list'] }, status: :unprocessable_entity
+        render_standard_error(message: 'Entry type is not included in the list', status: :unprocessable_entity)
       end
 
       def update
         if @entry.update(entry_params)
           render json: @entry.as_json(ENTRY_JSON_OPTIONS)
         else
-          render json: { errors: @entry.errors.full_messages }, status: :unprocessable_entity
+          render_validation_error(record: @entry, status: :unprocessable_entity)
         end
       rescue ArgumentError => e
         raise e unless e.message.include?('entry_type')
 
-        render json: { errors: ['Entry type is not included in the list'] }, status: :unprocessable_entity
+        render_standard_error(message: 'Entry type is not included in the list', status: :unprocessable_entity)
       end
 
       def destroy
