@@ -12,6 +12,9 @@ class Habit < ApplicationRecord
     custom: 'custom'
   }, validate: true
 
+  # Frequencies a user can pick through the API. The rest stay valid in the schema.
+  USER_SELECTABLE_FREQUENCIES = %w[daily weekdays].freeze
+
   validates :title, :cue, :minimum_version, :normal_version, presence: true
   validates :position, inclusion: { in: 1..3 }
 

@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   performance-test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       formatted_results: ${{ steps.format-results.outputs.results }}
 
